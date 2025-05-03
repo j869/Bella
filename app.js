@@ -12,14 +12,14 @@ const path = require('path');
 const twilio = require('twilio');
 const nodemailer = require('nodemailer');
 const { Pool } = require('pg');
+require('dotenv').config();
+
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_ACCESS_TOKEN;
 const client = twilio(accountSid, authToken);
 
 
 // PostgreSQL setup
-require('dotenv').config();
-
 const pool = new Pool({
     user: process.env.PG_USER, // PostgreSQL username from .env
     host: process.env.PG_HOST, // PostgreSQL host from .env
@@ -159,6 +159,7 @@ app.post('/send-email', upload.single('attachment'), async (req, res) => {
 });
 
 app.post('/send-sms', (req, res) => {
+    // console.log('ac1            ', accountSid, authToken);
     const { to, message } = req.body;
     console.log('ac2            ('+ req.clientIp + ')');
     // Insert message details into the history table
@@ -184,11 +185,11 @@ app.post('/send-sms', (req, res) => {
             console.error('ac38    Error saving message to history table:', dbError.message);
         }
 
-        res.send(`Message sent: ${message.sid}`);
+        return res.send(`Message sent: ${message.sid}`);
     })
     .catch(error => {
         console.log('ac8     Error sending SMS:', error.message);
-        res.send(`Error sending message: ${error.message}`);
+        return res.send(`Error sending message: ${error.message}`);
     });
     // Validate the 'to' field format
     const phoneRegex = /^\+614\d{8}$/;
@@ -200,15 +201,15 @@ app.post('/send-sms', (req, res) => {
     client.messages.create({
         body: message + ' (reply to ' + to + ')',
         from: '+14789991903',
-        to: to
+        to: '+61409877561'
     })
     .then(message => {
         console.log('ac9     Message sent:', message);
-        res.send(`Message sent: ${message.sid}`);
+        return res.send(`Message sent: ${message.sid}`);
     })
     .catch(error => {
         console.log('ac8     Error sending SMS:', error.message);
-        res.send(`Error sending message: ${error.message}`);
+        return res.send(`Error sending message: ${error.message}`);
     });
 });
 
