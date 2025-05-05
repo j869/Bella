@@ -184,7 +184,7 @@ app.post('/send-sms', async (req, res) => {
         console.error('ac38    Error saving message to database:', dbError.message);
     }
 
-    console.log("ac21   ")
+    console.log("ac21      ")
 
     // Validate the 'to' field format
     // const phoneRegex = /^\+614\d{8}$/;
