@@ -29,8 +29,8 @@ const pool = new Pool({
 });
 
 pool.connect()
-    .then(() => console.log('ae9     Connected to PostgreSQL database'))
-    .catch(err => console.error('ae8     Error connecting to PostgreSQL database:', err));
+    .then(() => console.log('ae9        Connected to PostgreSQL database'))
+    .catch(err => console.error('ae8        Error connecting to PostgreSQL database:', err));
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -91,7 +91,7 @@ app.get('/', (req, res) => {
     console.log('ab1        USER('+ req.clientIp + ') is loading the contact page ');
     pool.query(`SELECT id, TO_CHAR("time", 'DD-Mon-YYYY') AS formatted_date, ip, replyto, subject, message, location, file, original_filename FROM history`, (err, result) => {
         if (err) {
-            console.error('ab81     Error fetching records from history table:', err);
+            console.error('ab81         Error fetching records from history table:', err);
             // res.status(500).send('Error fetching records');
             res.render('main', { title: 'Send me an SMS' });
         } else {
@@ -129,9 +129,9 @@ app.post('/send-email', upload.single('attachment'), async (req, res) => {
 
     try {
         await pool.query(query, values);
-        console.log('em3    Email details saved to history table');
+        console.log('em3          Email details saved to history table');
     } catch (dbError) {
-        console.error('em38    Error saving email to history table:', dbError.message);
+        console.error('em38         Error saving email to history table:', dbError.message);
     }
 
     // Configure the transporter
@@ -157,7 +157,7 @@ app.post('/send-email', upload.single('attachment'), async (req, res) => {
             attachments: attachments
             });
 
-        console.log('ad5          Email sent:', info.response);
+        console.log('ad5        Email sent:', info.response);
         res.send(`Email sent: ${info.response}`);
     } catch (error) {
         console.error('ad6          Error sending email:', error);
@@ -188,7 +188,7 @@ app.post('/send-sms', async (req, res) => {
         console.error('ac38         Error saving message to database:', dbError.message);
     }
 
-    console.log("ac21      ")
+    // console.log("ac21      ")
 
     // Validate the 'to' field format
     // const phoneRegex = /^\+614\d{8}$/;
