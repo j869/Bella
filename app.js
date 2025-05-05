@@ -94,7 +94,7 @@ app.get('/', (req, res) => {
             // res.status(500).send('Error fetching records');
             res.render('main', { title: 'Send me an SMS' });
         } else {
-            console.log('ab2     Records fetched from history table:', result.rows);
+            //console.log('ab2     Records fetched from history table:', result.rows);
             res.render('main', { data: result.rows });
         }
     });
@@ -164,52 +164,41 @@ app.post('/send-email', upload.single('attachment'), async (req, res) => {
     }
 });
 
-app.post('/send-sms', (req, res) => {
-    // console.log('ac1            ', accountSid, authToken);
+app.post('/send-sms', async (req, res) => {
+    //console.log('ac1            ', accountSid, authToken);
+    console.log('ac1            ('+ req.clientIp + ')');
     const { to, message } = req.body;
-    console.log('ac2            ('+ req.clientIp + ')');
+
     // Insert message details into the history table
+    const currentDate = new Date();
     const query = `
         INSERT INTO history (message, subject, time, ip, replyto)
         VALUES ($1, $2, $3, $4, $5)
     `;
-
-    client.messages.create({
-        body: message,
-        from: '+14789991903',
-        to: to
-    })
-    .then(async (message) => {
-        console.log('ac9     Message sent:', message);
-
-        // Extract details and insert into the database
-        const values = [message.body, message.body, message.dateUpdated, req.clientIp, null];
-        try {
-            await pool.query(query, values);
-            console.log('ac3    Message details saved to history table');
-        } catch (dbError) {
-            console.error('ac38    Error saving message to history table:', dbError.message);
-        }
-
-        return res.send(`Message sent: ${message.sid}`);
-    })
-    .catch(error => {
-        console.log('ac8     Error sending SMS:', error.message);
-        return res.send(`Error sending message: ${error.message}`);
-    });
-    // Validate the 'to' field format
-    const phoneRegex = /^\+614\d{8}$/;
-    if (!phoneRegex.test(to)) {
-        console.log('ac8     Invalid phone number format:', to);
-        return res.status(400).send('Invalid phone number format. It should be in the format +614########');
+    // Extract details and insert into the database
+    const values = [message.body, 'SMS sent to +61409877561', currentDate, req.clientIp, null];
+    try {
+        await pool.query(query, values);
+        console.log('ac3    Message details saved to database');
+    } catch (dbError) {
+        console.error('ac38    Error saving message to database:', dbError.message);
     }
+
+    console.log("ac21   ")
+
+    // Validate the 'to' field format
+    // const phoneRegex = /^\+614\d{8}$/;
+    // if (!phoneRegex.test(to)) {
+    //     console.log('ac8     Invalid phone number format:', to);
+    //     return res.status(400).send('Invalid phone number format. It should be in the format +614########');
+    // }
 
     client.messages.create({
         body: message + ' (reply to ' + to + ')',
         from: '+14789991903',
         to: '+61409877561'
     })
-    .then(message => {
+    .then(async (message) => {
         console.log('ac9     Message sent:', message);
         return res.send(`Message sent: ${message.sid}`);
     })
