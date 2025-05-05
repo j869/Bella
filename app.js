@@ -36,7 +36,8 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
 app.set('view engine', 'ejs');
-app.set('views', '/home/joma/Documents/contactPage/views');
+// app.set('views', '/home/joma/Documents/contactPage/views');
+app.set('views', __dirname + '/views');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Configure multer for file uploads
