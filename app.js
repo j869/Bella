@@ -88,14 +88,14 @@ app.get('/get-location', async (req, res) => {
     
 
 app.get('/', (req, res) => {
-    console.log('ab1            ('+ req.clientIp + ')');
+    console.log('ab1        USER('+ req.clientIp + ') is loading the contact page ');
     pool.query(`SELECT id, TO_CHAR("time", 'DD-Mon-YYYY') AS formatted_date, ip, replyto, subject, message, location, file, original_filename FROM history`, (err, result) => {
         if (err) {
             console.error('ab81     Error fetching records from history table:', err);
             // res.status(500).send('Error fetching records');
             res.render('main', { title: 'Send me an SMS' });
         } else {
-            //console.log('ab2     Records fetched from history table:', result.rows);
+            console.log(`ab2     ${result.rows.length} records fetched from history table, i.e.`, result.rows[result.rows.length - 1]);
             res.render('main', { data: result.rows });
         }
     });
@@ -104,7 +104,7 @@ app.get('/', (req, res) => {
 
 
 app.post('/send-email', upload.single('attachment'), async (req, res) => {
-    console.log('em1            (' + req.clientIp + ')', req.body);
+    console.log('em1        USER('+ req.clientIp + ') is sending an email', req.body);
     // console.log('em2      Uploaded file:', req.file); // This should show your file info
     const { emailTo, subject, emailMessage } = req.body;
 
@@ -157,18 +157,21 @@ app.post('/send-email', upload.single('attachment'), async (req, res) => {
             attachments: attachments
             });
 
-        console.log('ad5     Email sent:', info.response);
+        console.log('ad5          Email sent:', info.response);
         res.send(`Email sent: ${info.response}`);
     } catch (error) {
-        console.error('ad6     Error sending email:', error);
+        console.error('ad6          Error sending email:', error);
         res.status(500).send(`Error sending email: ${error.message}`);
     }
 });
 
 app.post('/send-sms', async (req, res) => {
     //console.log('ac1            ', accountSid, authToken);
-    console.log('ac1            ('+ req.clientIp + ')');
+    console.log('ac1        USER('+ req.clientIp + ') is sending a SMS    ', req.body);
     const { to, message } = req.body;
+    if (message === null || message === undefined) {
+        message = 'no message';
+      }    
 
     // Insert message details into the history table
     const currentDate = new Date();
@@ -177,12 +180,12 @@ app.post('/send-sms', async (req, res) => {
         VALUES ($1, $2, $3, $4, $5)
     `;
     // Extract details and insert into the database
-    const values = [message.body, 'SMS sent to +61409877561', currentDate, req.clientIp, null];
+    const values = [message, 'SMS sent to +61409877561', currentDate, req.clientIp, to];
     try {
         await pool.query(query, values);
-        console.log('ac3    Message details saved to database');
+        console.log('ac3          Message details saved to database');
     } catch (dbError) {
-        console.error('ac38    Error saving message to database:', dbError.message);
+        console.error('ac38         Error saving message to database:', dbError.message);
     }
 
     console.log("ac21      ")
@@ -200,17 +203,16 @@ app.post('/send-sms', async (req, res) => {
         to: '+61409877561'
     })
     .then(async (message) => {
-        console.log('ac9     Message sent:', message);
+        console.log('ac9          Message sent:', message);
         return res.send(`Message sent: ${message.sid}`);
     })
     .catch(error => {
-        console.log('ac8     Error sending SMS:', error.message);
+        console.log('ac8          Error sending SMS:', error.message);
         return res.send(`Error sending message: ${error.message}`);
     });
 });
 
 app.listen(port, () => {
-    console.log('ad3       Server started');
-    console.log(`Server is running on port ${port}`);
+    console.log(`ad3        SERVER is running on port ${port}`);
 });
 
