@@ -78,6 +78,7 @@
                 <th scope="col">Date</th>
                 <th scope="col">IP</th>
                 <th scope="col">ReplyTo</th>
+                <th scope="col">File</th>
             </tr>
             </thead>
             <tbody>
@@ -88,9 +89,16 @@
                         <th scope="row"><%= index + 1 %></th>
                         <td><%= item.message %></td>
                         <td><%= item.subject %></td>
-                        <td><%= new Date(item.date).toLocaleString() %></td>
+                        <td><%= item.formatted_date %></td>
                         <td><%= item.ip %></td>
-                        <td><%= item.replyTo %></td>
+                        <td><%= item.replyto %></td>
+                        <td>
+                            <% if (item.file) { %>
+                                <a href="<%= item.file %>" download="<%= item.original_filename %>" target="_blank">Download File</a>
+                            <% } else { %>
+                                None
+                            <% } %>
+                        </td>                        
                     </tr>
                 <% }); %>
                 

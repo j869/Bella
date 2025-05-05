@@ -37,6 +37,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
 app.set('view engine', 'ejs');
 app.set('views', '/home/joma/Documents/contactPage/views');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Configure multer for file uploads
 const upload = multer({
@@ -87,7 +88,7 @@ app.get('/get-location', async (req, res) => {
 
 app.get('/', (req, res) => {
     console.log('ab1            ('+ req.clientIp + ')');
-    pool.query('SELECT * FROM history', (err, result) => {
+    pool.query(`SELECT id, TO_CHAR("time", 'DD-Mon-YYYY') AS formatted_date, ip, replyto, subject, message, location, file, original_filename FROM history`, (err, result) => {
         if (err) {
             console.error('ab81     Error fetching records from history table:', err);
             // res.status(500).send('Error fetching records');
@@ -108,7 +109,11 @@ app.post('/send-email', upload.single('attachment'), async (req, res) => {
 
     // Handle the attachment if it exists
     let attachments = [];
+    let filePath = null;
+    let originalFilename = null;
     if (req.file) {
+        filePath = req.file.path;
+        originalFilename = req.file.originalname;
         attachments = [{
             filename: req.file.originalname || path.basename(req.file.path),
             path: req.file.path
@@ -116,10 +121,10 @@ app.post('/send-email', upload.single('attachment'), async (req, res) => {
     }
     // Insert email details into the history table
     const query = `
-        INSERT INTO history (message, subject, time, ip, replyto)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO history (message, subject, time, ip, replyto, file, original_filename)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;
-    const values = [emailMessage, subject, new Date(), req.clientIp, emailTo];
+    const values = [emailMessage, subject, new Date(), req.clientIp, emailTo, filePath, originalFilename];
 
     try {
         await pool.query(query, values);
@@ -143,9 +148,10 @@ app.post('/send-email', upload.single('attachment'), async (req, res) => {
 
     try {
         const info = await transporter.sendMail({
-            from: emailTo,
-            to: "john@maherco.com.au",
-            subject: subject,
+            from: "john@buildingbb.com.au",     //emailTo,
+            to: "john@buildingbb.com.au",
+            replyTo: emailTo,
+            subject: subject + ' (reply to ' + emailTo + ')',
             text: emailMessage,
             attachments: attachments
             });
