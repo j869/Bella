@@ -24,5 +24,7 @@ CREATE TABLE IF NOT EXISTS public.history
     file BYTEA,
     original_filename VARCHAR(255)
 );
+ALTER TABLE history ALTER COLUMN file TYPE VARCHAR(255);     --store files on drive, not in db
+
 
 

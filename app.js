@@ -128,9 +128,10 @@ app.post('/send-email', upload.single('attachment'), async (req, res) => {
     const values = [emailMessage, subject, new Date(), req.clientIp, emailTo, filePath, originalFilename];
 
     try {
-        await pool.query(query, values);
+        pool.query(query, values);
         console.log('em3          Email details saved to history table');
     } catch (dbError) {
+        console.error('em38         Error saving email to history table:', dbError);
         console.error('em38         Error saving email to history table:', dbError.message);
     }
 
