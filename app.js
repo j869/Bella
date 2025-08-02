@@ -166,6 +166,8 @@ app.post('/send-email', upload.single('attachment'), async (req, res) => {
     }
 });
 
+
+
 app.post('/send-sms', async (req, res) => {
     //console.log('ac1            ', accountSid, authToken);
     console.log('ac1        USER('+ req.clientIp + ') is sending a SMS    ', req.body);
@@ -188,15 +190,6 @@ app.post('/send-sms', async (req, res) => {
     } catch (dbError) {
         console.error('ac38         Error saving message to database:', dbError.message);
     }
-
-    // console.log("ac21      ")
-
-    // Validate the 'to' field format
-    // const phoneRegex = /^\+614\d{8}$/;
-    // if (!phoneRegex.test(to)) {
-    //     console.log('ac8     Invalid phone number format:', to);
-    //     return res.status(400).send('Invalid phone number format. It should be in the format +614########');
-    // }
 
     client.messages.create({
         body: message + ' (reply to ' + to + ')',
