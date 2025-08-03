@@ -8,18 +8,8 @@ const path = require('path');
 const fs = require('fs');
 
 // Set up test environment
+require('dotenv').config({ path: path.resolve(__dirname, '../.env.test') });
 process.env.NODE_ENV = 'test';
-process.env.PG_USER = 'test_user';
-process.env.PG_HOST = 'localhost';
-process.env.PG_DATABASE = 'test_db';
-process.env.PG_PASSWORD = 'test_password';
-process.env.PG_PORT = '5432';
-process.env.TWILIO_ACCOUNT_SID = 'test_sid';
-process.env.TWILIO_ACCESS_TOKEN = 'test_token';
-process.env.SMTP_EMAIL = 'test@example.com';
-process.env.SMTP_PASSWORD = 'test_password';
-process.env.STRIPE_SECRET_KEY = 'sk_test_key_for_testing';
-process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_secret';
 
 // Mock all external services for E2E tests BEFORE importing app
 jest.mock('pg', () => ({
