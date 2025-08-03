@@ -1,26 +1,47 @@
 
+/**
+ * Contact Page Application
+ * 
+ * A comprehensive contact form application that supports:
+ * - SMS messaging via Twilio
+ * - Email sending with attachments via Nodemailer
+ * - File uploads via Multer
+ * - Payment processing via Stripe
+ * - Message history tracking in PostgreSQL
+ * - IP-based location detection
+ * 
+ * @author John
+ * @version 1.0.0
+ */
+
 const express = require('express');
 const multer = require('multer');
 const axios = require('axios');
 const port = 3000;
 const bodyParser = require('body-parser');
 
-
 const fs = require('fs');
 const path = require('path');
-//twilio setup
+
+// Third-party service integrations
 const twilio = require('twilio');
 const nodemailer = require('nodemailer');
 const { Pool } = require('pg');
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); 
 
+/**
+ * Twilio client configuration
+ * Used for sending SMS messages
+ */
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_ACCESS_TOKEN;
 const client = twilio(accountSid, authToken);
 
-
-// PostgreSQL setup
+/**
+ * PostgreSQL database connection pool
+ * Stores message history and user interactions
+ */
 const pool = new Pool({
     user: process.env.PG_USER, // PostgreSQL username from .env
     host: process.env.PG_HOST, // PostgreSQL host from .env
@@ -29,16 +50,30 @@ const pool = new Pool({
     port: process.env.PG_PORT, // PostgreSQL port from .env
 });
 
+// Test database connection
 pool.connect()
     .then(() => console.log('ae9        Connected to PostgreSQL database'))
     .catch(err => console.error('ae8        Error connecting to PostgreSQL database:', err));
 const app = express();
 
+/**
+ * Request logging middleware
+ * Logs all incoming requests with method and path
+ */
 app.use((req, res, next) => {
   console.log(`x1        NEW REQUEST ${req.method} ${req.path} `);
   next();
 });
 
+/**
+ * Stripe webhook endpoint
+ * Handles payment-related webhooks from Stripe
+ * Must be placed before JSON parsing middleware
+ * 
+ * @route POST /webhook
+ * @param {Object} req - Express request object with raw body
+ * @param {Object} res - Express response object
+ */
 app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
     // must Precede Middleware to parse JSON bodies    //app.use(express.json());  and bodyParser.urlencoded({ extended: true });
     const sig = req.headers['stripe-signature'];
@@ -82,24 +117,30 @@ app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res)
     }
 
     res.status(200).send("Webhook received");
-
 });
 
-
+/**
+ * Express middleware configuration
+ */
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Configure multer for file uploads
+/**
+ * Multer configuration for file uploads
+ * Limits file size to 10MB and stores in uploads/ directory
+ */
 const upload = multer({
     dest: 'uploads/',
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
-  });
+});
 
-
-// Middleware to get the client's IP address
+/**
+ * IP address extraction middleware
+ * Extracts client IP from headers or socket for location tracking
+ */
 app.use((req, res, next) => {
     bodyParser.urlencoded({ extended: true })
 
@@ -115,7 +156,15 @@ app.use((req, res, next) => {
     next();
 });
 
-// Route to get the user's location
+/**
+ * Get user location based on IP address
+ * Uses IPInfo API to determine geographical location
+ * 
+ * @route GET /get-location
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Object} JSON object containing location data
+ */
 app.get('/get-location', async (req, res) => {
     try {
         const response = await axios.get(`https://ipinfo.io/${req.clientIp}/json`);
@@ -126,6 +175,15 @@ app.get('/get-location', async (req, res) => {
     }
 });
 
+/**
+ * Main page route
+ * Renders the contact page with message history from database
+ * 
+ * @route GET /
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {String} Rendered EJS template with history data
+ */
 app.get('/', (req, res) => {
     console.log('ab1        USER('+ req.clientIp + ') is loading the contact page ');
     pool.query(`SELECT id, TO_CHAR("time", 'DD-Mon-YYYY') AS formatted_date, ip, replyto, subject, message, location, file, original_filename FROM history`, (err, result) => {
@@ -138,10 +196,21 @@ app.get('/', (req, res) => {
             res.render('main', { data: result.rows });
         }
     });
-    
 });
 
-
+/**
+ * Send email with optional file attachment
+ * Stores email details in database and sends via SMTP
+ * 
+ * @route POST /send-email
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {string} req.body.emailTo - Recipient email address
+ * @param {string} req.body.subject - Email subject
+ * @param {string} req.body.emailMessage - Email message content
+ * @param {File} req.file - Optional file attachment
+ * @returns {String} Success or error message
+ */
 app.post('/send-email', upload.single('attachment'), async (req, res) => {
     console.log('em1        USER('+ req.clientIp + ') is sending an email', req.body);
     // console.log('em2      Uploaded file:', req.file); // This should show your file info
@@ -205,15 +274,24 @@ app.post('/send-email', upload.single('attachment'), async (req, res) => {
     }
 });
 
-
-
+/**
+ * Send SMS message via Twilio
+ * Stores message details in database and sends SMS
+ * 
+ * @route POST /send-sms
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {string} req.body.to - Recipient phone number
+ * @param {string} req.body.message - SMS message content
+ * @returns {String} Success message with Twilio SID or error message
+ */
 app.post('/send-sms', async (req, res) => {
     //console.log('ac1            ', accountSid, authToken);
     console.log('ac1        USER('+ req.clientIp + ') is sending a SMS    ', req.body);
-    const { to, message } = req.body;
+    let { to, message } = req.body;
     if (message === null || message === undefined) {
         message = 'no message';
-      }    
+    }    
 
     // Insert message details into the history table
     const currentDate = new Date();
@@ -245,19 +323,46 @@ app.post('/send-sms', async (req, res) => {
     });
 });
 
-//#region stripe checkout
+/**
+ * Stripe payment processing routes
+ */
 
-    app.get("/success", async (req, res) => {
-      console.log("ps1    Payment successful for user:", req.user ? req.user: 'guest');
-      res.send("Payment successful! Thank you for your purchase.");
-    });
-    app.get("/cancel", async (req, res) => {
-      console.log("ps1    Payment cancelled for user:", req.user ? req.user: 'guest');
-      res.send("Payment cancelled. Please try again.");
-    });
+/**
+ * Payment success page
+ * 
+ * @route GET /success
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {String} Success message
+ */
+app.get("/success", async (req, res) => {
+    console.log("ps1    Payment successful for user:", req.user ? req.user: 'guest');
+    res.send("Payment successful! Thank you for your purchase.");
+});
 
+/**
+ * Payment cancellation page
+ * 
+ * @route GET /cancel
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {String} Cancellation message
+ */
+app.get("/cancel", async (req, res) => {
+    console.log("ps1    Payment cancelled for user:", req.user ? req.user: 'guest');
+    res.send("Payment cancelled. Please try again.");
+});
 
-    app.post("/create-checkout-session", async (req, res) => {
+/**
+ * Create Stripe checkout session
+ * Creates a payment session for a predefined product
+ * 
+ * @route POST /create-checkout-session
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Redirect} Redirects to Stripe checkout page
+ */
+app.post("/create-checkout-session", async (req, res) => {
     const session = await stripe.checkout.sessions.create({
         line_items: [
         {
@@ -277,13 +382,18 @@ app.post('/send-sms', async (req, res) => {
     });
 
     res.redirect(303, session.url);
-    });
-
-
-//#endregion
-
-
-app.listen(port, () => {
-    console.log(`ad3        SERVER is running on port ${port}`);
 });
+
+/**
+ * Start the Express server
+ * Only start server if this file is run directly (not imported for testing)
+ */
+if (require.main === module) {
+    app.listen(port, () => {
+        console.log(`ad3        SERVER is running on port ${port}`);
+    });
+}
+
+// Export the app for testing
+module.exports = app;
 
