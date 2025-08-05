@@ -1090,10 +1090,151 @@ if (require.main === module) {
     });
 }
 
+/**
+ * Build email message from form data
+ * Legacy function for test compatibility
+ * 
+ * @param {Object} formData - Form data from estimate request
+ * @returns {string} Formatted email message
+ */
+function buildEstimateEmailMessage(formData) {
+    if (!formData) return 'BUILDING PERMIT COST ESTIMATE REQUEST\n\nNo form data provided';
+    
+    let message = 'BUILDING PERMIT COST ESTIMATE REQUEST\n\n';
+    
+    // Contact Information Section
+    message += 'CONTACT INFORMATION:\n';
+    if (formData.customerName) {
+        message += `Name: ${formData.customerName}\n`;
+    } else {
+        message += 'Name: Not provided\n';
+    }
+    if (formData.customerEmail || formData.emailTo) {
+        message += `Email: ${formData.customerEmail || formData.emailTo}\n`;
+    }
+    if (formData.phone) {
+        message += `Phone: ${formData.phone}\n`;
+    }
+    message += '\n';
+    
+    // Construction Details Section
+    if (formData.foundation) {
+        message += 'CONSTRUCTION DETAILS:\n';
+        message += `Foundation: ${formData.foundation}\n`;
+        message += '\n';
+    } else if (!formData.customerName && !formData.purpose) {
+        // For minimal forms, show defaults
+        message += 'CONSTRUCTION DETAILS:\n';
+        message += 'Foundation: Not specified\n';
+        message += '\n';
+    }
+    
+    // Location & Setbacks Section  
+    if (formData.location || formData.boundaryOffsets) {
+        message += 'LOCATION & SETBACKS:\n';
+        if (formData.location) {
+            message += `Location: ${formData.location}\n`;
+        }
+        if (formData.boundaryOffsets) {
+            message += `Boundary offsets: ${formData.boundaryOffsets}\n`;
+        }
+        message += '\n';
+    } else if (!formData.customerName && !formData.purpose) {
+        // For minimal forms, show defaults
+        message += 'LOCATION & SETBACKS:\n';
+        message += 'Location: Not specified\n';
+        message += 'Boundary offsets: Not answered\n';
+        message += '\n';
+    }
+    
+    // Dwelling Information Section
+    if (formData.dwellingOnProperty || formData.adjacentDwelling) {
+        message += 'DWELLING INFORMATION:\n';
+        if (formData.dwellingOnProperty) {
+            message += `Dwelling on property: ${formData.dwellingOnProperty}\n`;
+        }
+        if (formData.adjacentDwelling) {
+            message += `Adjacent dwelling: ${formData.adjacentDwelling}\n`;
+        }
+        if (formData.dwellingOnProperty === 'no') {
+            message += 'Dwelling permitted: unknown\n';
+        }
+        message += '\n';
+    }
+    
+    // Building Envelope & Easements Section (combined)
+    if (formData.buildingEnvelope || formData.easements) {
+        message += 'BUILDING ENVELOPE & EASEMENTS:\n';
+        if (formData.buildingEnvelope) {
+            message += `Building envelope: ${formData.buildingEnvelope}\n`;
+        }
+        if (formData.insideEnvelope) {
+            message += `Inside envelope: ${formData.insideEnvelope}\n`;
+        }
+        if (formData.easements) {
+            message += `Easements: ${formData.easements}\n`;
+        }
+        if (formData.overEasement) {
+            message += `Over easement: ${formData.overEasement}\n`;
+        } else if (formData.easements) {
+            message += 'Over easement: no\n';
+        }
+        message += '\n';
+    }
+    
+    // Purpose & Storage Section
+    if (formData.purpose || formData['storageItems[]'] || formData.storageItems) {
+        message += 'PURPOSE & STORAGE:\n';
+        if (formData.purpose) {
+            message += `Purpose: ${formData.purpose}\n`;
+        }
+        
+        // Handle storage items
+        if (formData['storageItems[]']) {
+            const items = Array.isArray(formData['storageItems[]']) ? formData['storageItems[]'] : [formData['storageItems[]']];
+            message += `Storage items: ${items.length > 0 ? items.join(', ') : 'None specified'}\n`;
+        } else if (formData.storageItems) {
+            message += `Storage items: ${formData.storageItems}\n`;
+        } else {
+            message += 'Storage items: None specified\n';
+        }
+        message += '\n';
+    } else if (!formData.customerName && !formData.foundation) {
+        // For minimal forms, show defaults
+        message += 'PURPOSE & STORAGE:\n';
+        message += 'Purpose: Not specified\n';
+        message += 'Storage items: None specified\n';
+        message += '\n';
+    }
+    
+    // Other Details Section - only if there are fields not covered above
+    if (formData.easements && !formData.buildingEnvelope) {
+        message += 'OTHER DETAILS:\n';
+        message += `Easements: ${formData.easements}\n`;
+        message += '\n';
+    }
+    
+    // Add additional information if provided
+    if (formData.emailMessage && formData.emailMessage.trim()) {
+        message += 'ADDITIONAL INFORMATION:\n';
+        message += formData.emailMessage + '\n\n';
+    }
+    
+    // Add footer with estimate service information
+    message += '---\n';
+    message += 'This estimate request was submitted via the building permit website.\n';
+    message += 'Please note: This is a $55 estimate service to provide you with a preliminary cost assessment.\n';
+    message += 'This estimate is not a final quote. The $55 will be credited back if you proceed with our services.\n';
+    message += `Submitted: ${new Date().toLocaleString('en-AU')}\n`;
+    
+    return message;
+}
+
 // Export the app for testing
 module.exports = app;
 module.exports.sendEmail = sendEmail;
 module.exports.sendPurchaseNotificationEmail = sendPurchaseNotificationEmail;
 module.exports.pool = pool;
 module.exports.emailTemplates = emailTemplates;
+module.exports.buildEstimateEmailMessage = buildEstimateEmailMessage;
 

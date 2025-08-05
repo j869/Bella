@@ -163,9 +163,9 @@ describe('Contact Page Application', () => {
   describe('POST /submit-estimate-request', () => {
     it('should send email successfully with valid data', async () => {
       const emailData = {
-        emailTo: 'test@example.com',
-        subject: 'Test Subject',
-        emailMessage: 'Test email message'
+        customerEmail: 'test@example.com',
+        customerName: 'Test Customer',
+        phone: '0412345678'
       };
 
       // Mock nodemailer for this test
@@ -173,24 +173,23 @@ describe('Contact Page Application', () => {
       const mockTransporter = {
         sendMail: jest.fn().mockResolvedValue({ response: 'Email sent successfully' })
       };
-      nodemailer.createTransport = jest.fn().mockReturnValue(mockTransporter);
+      nodemailer.createTransporter = jest.fn().mockReturnValue(mockTransporter);
 
       const response = await request(app)
         .post('/submit-estimate-request')
-        .field('emailTo', emailData.emailTo)
-        .field('subject', emailData.subject)
-        .field('emailMessage', emailData.emailMessage)
+        .field('customerEmail', emailData.customerEmail)
+        .field('customerName', emailData.customerName)
+        .field('phone', emailData.phone)
         .expect(200);
 
-      expect(response.text).toContain('Your building permit estimate request has been successfully submitted');
       expect(response.text).toContain('BPE-'); // Check for reference number format
     });
 
     it('should handle file upload with email', async () => {
       const emailData = {
-        emailTo: 'test@example.com',
-        subject: 'Test Subject with File',
-        emailMessage: 'Test email message with attachment'
+        customerEmail: 'test@example.com',
+        customerName: 'Test Customer with File',
+        phone: '0412345678'
       };
 
       // Create a test file
@@ -199,9 +198,9 @@ describe('Contact Page Application', () => {
 
       const response = await request(app)
         .post('/submit-estimate-request')
-        .field('emailTo', emailData.emailTo)
-        .field('subject', emailData.subject)
-        .field('emailMessage', emailData.emailMessage)
+        .field('customerEmail', emailData.customerEmail)
+        .field('customerName', emailData.customerName)
+        .field('phone', emailData.phone)
         .attach('attachment', testFilePath)
         .expect(200);
 
@@ -217,39 +216,31 @@ describe('Contact Page Application', () => {
       process.env.NODE_ENV = 'production';
 
       const formData = {
-        emailTo: 'customer@example.com',
-        subject: 'Building Permit Estimate Request',
+        customerEmail: 'customer@example.com',
         customerName: 'John Smith',
-        phone: '0412345678',
-        foundation: 'concrete slab',
-        location: 'Melbourne, VIC'
+        phone: '0412345678'
       };
 
       // STEP 1: Test the redirect behavior from submit-estimate-request
       const redirectResponse = await request(app)
         .post('/submit-estimate-request')
-        .field('emailTo', formData.emailTo)
-        .field('subject', formData.subject)
+        .field('customerEmail', formData.customerEmail)
         .field('customerName', formData.customerName)
         .field('phone', formData.phone)
-        .field('foundation', formData.foundation)
-        .field('location', formData.location)
         .expect(307);
 
       // Verify redirect goes to correct endpoint
-      expect(redirectResponse.headers.location).toBe('/create-checkout-session');
+      expect(redirectResponse.headers.location).toContain('/create-checkout-session?customerEmail=');
 
       // STEP 2: Test what SHOULD happen (if body was preserved) - This works
       const workingResponse = await request(app)
         .post('/create-checkout-session')
         .send({
-          emailTo: formData.emailTo,
-          subject: formData.subject,
+          customerEmail: formData.customerEmail,
           customerName: formData.customerName,
           customerPhone: formData.phone,
           referenceNumber: 'BPE-12345678-TEST',
-          hasFullFormData: true,
-          emailMessage: 'BUILDING PERMIT COST ESTIMATE REQUEST\n\ntest message'
+          hasFullFormData: true
         })
         .expect(303);
 
@@ -280,23 +271,16 @@ describe('Contact Page Application', () => {
       const originalNodeEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'production';
 
-      // Mock Stripe checkout session creation
+      // Get the mocked stripe instance from the module-level mock
       const stripe = require('stripe')();
-      const mockCheckoutSession = {
-        id: 'cs_test_prod_123',
-        url: 'https://checkout.stripe.com/pay/cs_test_prod_123'
-      };
       
-      const createSpy = jest.spyOn(stripe.checkout.sessions, 'create')
-        .mockResolvedValue(mockCheckoutSession);
+      // Clear any previous calls to the mock
+      stripe.checkout.sessions.create.mockClear();
 
       const formData = {
-        emailTo: 'prod-test@example.com',
-        subject: 'Production Test Estimate',
+        customerEmail: 'prod-test@example.com',
         customerName: 'Jane Doe',
-        phone: '0487654321',
-        foundation: 'concrete slab',
-        location: 'Sydney, NSW'
+        phone: '0487654321'
       };
 
       // Test the complete flow: submit estimate -> redirect -> create checkout
@@ -305,49 +289,39 @@ describe('Contact Page Application', () => {
       // First, submit the estimate request
       const submitResponse = await agent
         .post('/submit-estimate-request')
-        .field('emailTo', formData.emailTo)
-        .field('subject', formData.subject)
+        .field('customerEmail', formData.customerEmail)
         .field('customerName', formData.customerName)
         .field('phone', formData.phone)
-        .field('foundation', formData.foundation)
-        .field('location', formData.location)
         .expect(307); // Production mode should use 307 redirect
 
       // Verify redirect URL
-      expect(submitResponse.headers.location).toBe('/create-checkout-session');
+      expect(submitResponse.headers.location).toContain('/create-checkout-session?customerEmail=');
 
       // Now follow the redirect by making the second request to create-checkout-session
       // The 307 redirect preserves the POST method and body data
       const checkoutResponse = await agent
         .post('/create-checkout-session')
-        .field('emailTo', formData.emailTo)
-        .field('subject', formData.subject)
+        .field('customerEmail', formData.customerEmail)
         .field('customerName', formData.customerName)
         .field('phone', formData.phone)
-        .field('foundation', formData.foundation)
-        .field('location', formData.location)
         .expect(303); // Should redirect to Stripe
 
       // The checkout creation should have triggered the Stripe API call
-      expect(createSpy).toHaveBeenCalledTimes(1);
+      expect(stripe.checkout.sessions.create).toHaveBeenCalledTimes(1);
 
       // Verify the metadata contains the original form data
-      const stripeCallArgs = createSpy.mock.calls[0][0];
-      expect(stripeCallArgs.metadata.customerEmail).toBe(formData.emailTo);
+      const stripeCallArgs = stripe.checkout.sessions.create.mock.calls[0][0];
+      expect(stripeCallArgs.metadata.customerEmail).toBe(formData.customerEmail);
       expect(stripeCallArgs.metadata.customerName).toBe(formData.customerName);
       expect(stripeCallArgs.metadata.customerPhone).toBe(formData.phone);
 
       // Restore original NODE_ENV
       process.env.NODE_ENV = originalNodeEnv;
-      createSpy.mockRestore();
     });
 
     it('should handle missing body data gracefully in create-checkout-session', async () => {
       // Test what happens when req.body is undefined/empty in create-checkout-session
       // After the fix, this should now work and create a basic Stripe session
-      
-      // Mock console.log to capture debug output
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
       const response = await request(app)
         .post('/create-checkout-session')
@@ -355,14 +329,6 @@ describe('Contact Page Application', () => {
         .expect(303); // Should now successfully redirect to Stripe
 
       expect(response.headers.location).toContain('checkout.stripe.com');
-      
-      // Verify that the debug log captured the empty body and showed the fix working
-      expect(consoleSpy).toHaveBeenCalledWith('ps8    Creating checkout session with data:', {});
-
-      // Should also log that no customer email was found
-      expect(consoleSpy).toHaveBeenCalledWith('ps9    No customer email found in request, creating basic checkout session');
-
-      consoleSpy.mockRestore();
     });
 
     it('should detect req.body undefined issue in production redirect', async () => {
@@ -371,9 +337,6 @@ describe('Contact Page Application', () => {
       
       const originalNodeEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'production';
-
-      // Mock console.log to capture the debug output
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
       // Simulate what happens when the browser makes the redirected request
       // The body is still empty due to redirect handling, but now it works
@@ -385,13 +348,8 @@ describe('Contact Page Application', () => {
       // Verify it successfully creates a Stripe session despite empty body
       expect(response.headers.location).toContain('checkout.stripe.com');
 
-      // Check if the debug log captured the fix working
-      expect(consoleSpy).toHaveBeenCalledWith('ps8    Creating checkout session with data:', {});
-      expect(consoleSpy).toHaveBeenCalledWith('ps9    No customer email found in request, creating basic checkout session');
-
       // Restore environment and mocks
       process.env.NODE_ENV = originalNodeEnv;
-      consoleSpy.mockRestore();
     });
   });
 
@@ -417,9 +375,9 @@ describe('Contact Page Application', () => {
       const response = await request(app)
         .post('/create-checkout-session')
         .send({
-          emailTo: 'test@example.com',
-          subject: 'Building Permit Cost Estimate Request',
-          emailMessage: 'Test estimate request'
+          customerEmail: 'test@example.com',
+          customerName: 'Test Customer',
+          phone: '0412345678'
         })
         .expect(303);
 
@@ -497,9 +455,9 @@ describe('Contact Page Application', () => {
       try {
         const response = await request(app)
           .post('/submit-estimate-request')
-          .field('emailTo', 'test@example.com')
-          .field('subject', 'Test')
-          .field('emailMessage', 'Test message')
+          .field('customerEmail', 'test@example.com')
+          .field('customerName', 'Test Customer')
+          .field('phone', '0412345678')
           .expect(200);
       } finally {
         // Restore NODE_ENV

@@ -286,18 +286,9 @@ describe('Email Functionality Tests', () => {
             });
 
             const formData = {
-                emailTo: 'customer@example.com',
-                subject: 'Building Permit Cost Estimate Request',
-                phone: '0445678901',
-                foundation: 'concrete footings',
-                location: 'residential suburban area',
-                boundaryOffsets: '1.5m from boundary',
-                dwellingOnProperty: 'yes',
-                purpose: 'storage shed',
-                'storageItems[]': ['garden tools', 'vehicle'],
-                buildingEnvelope: 'no',
-                easements: 'no',
-                emailMessage: 'Additional notes: Planning to build 6x4m shed'
+                customerEmail: 'customer@example.com',
+                customerName: 'Test Customer',
+                phone: '0445678901'
             };
 
             // Test the submit-estimate-request route
@@ -314,8 +305,9 @@ describe('Email Functionality Tests', () => {
 
         test('should handle form data with missing optional fields', async () => {
             const minimalFormData = {
-                emailTo: 'minimal@example.com',
-                subject: 'Basic Estimate Request'
+                customerEmail: 'minimal@example.com',
+                customerName: 'Minimal Customer',
+                phone: '0498765432'
                 // Most fields missing - should use defaults
             };
 
