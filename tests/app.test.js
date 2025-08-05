@@ -185,16 +185,21 @@ describe('Contact Page Application', () => {
       expect(response.text).toContain('BPE-'); // Check for reference number format
     });
 
-    it('should handle file upload with email', async () => {
+    it('should handle multiple file uploads with email', async () => {
       const emailData = {
         customerEmail: 'test@example.com',
-        customerName: 'Test Customer with File',
+        customerName: 'Test Customer with Multiple Files',
         phone: '0412345678'
       };
 
-      // Create a test file
+      // Create test files
       const testFilePath = path.join(__dirname, 'test-file.txt');
+      const section32Path = path.join(__dirname, 'test-section32.pdf');
+      const titlePath = path.join(__dirname, 'test-title.pdf');
+      
       require('fs').writeFileSync(testFilePath, 'Test file content');
+      require('fs').writeFileSync(section32Path, 'Test section 32 content');
+      require('fs').writeFileSync(titlePath, 'Test title content');
 
       const response = await request(app)
         .post('/submit-estimate-request')
@@ -202,12 +207,16 @@ describe('Contact Page Application', () => {
         .field('customerName', emailData.customerName)
         .field('phone', emailData.phone)
         .attach('attachment', testFilePath)
+        .attach('section32', section32Path)
+        .attach('propertyTitle', titlePath)
         .expect(200);
 
       expect(response.text).toContain('Thank You');
 
-      // Clean up test file
+      // Clean up test files
       require('fs').unlinkSync(testFilePath);
+      require('fs').unlinkSync(section32Path);
+      require('fs').unlinkSync(titlePath);
     });
 
     it('should correctly pass data from submit-estimate-request to create-checkout-session', async () => {

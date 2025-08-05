@@ -388,16 +388,62 @@
                                 </div>
                             </div>
 
-                            <!-- Additional Information -->
+                            <!-- Step 7: Property Documents -->
                             <div class="row mb-4">
-                                <div class="col-12 mb-3">
-                                    <label for="additionalInfo" class="form-label">Additional Information</label>
+                                <div class="col-12">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="step-number me-3">7</div>
+                                        <h4 class="mb-0">Property Documents</h4>
+                                    </div>
+                                </div>
+                                
+                                <!-- Section 32 Document -->
+                                <div class="col-12 mb-4">
+                                    <label for="section32" class="form-label">Section 32 Statement (Optional but Recommended)</label>
+                                    <input type="file" id="section32" name="section32" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                    <div class="form-text">
+                                        <strong>What is this?</strong> A Section 32 is a vendor statement that shows property details including overlays, covenants, and restrictions.
+                                        <br><strong>Why we need it:</strong> It helps us identify planning overlays (like bushfire, heritage, or environmental zones) that may affect your permit requirements and costs.
+                                    </div>
+                                </div>
+
+                                <!-- Property Title/Plan -->
+                                <div class="col-12 mb-4">
+                                    <label for="propertyTitle" class="form-label">Title Certificate or Property Plan (Optional but Recommended)</label>
+                                    <input type="file" id="propertyTitle" name="propertyTitle" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                    <div class="form-text">
+                                        <strong>What is this?</strong> Your property title certificate or survey plan showing boundaries and easements.
+                                        <br><strong>Why we need it:</strong> Essential for determining setback requirements, easement locations, and building envelope restrictions that directly impact permit costs.
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- Separator between Property Documents and Additional Information -->
+                            <hr class="my-5" style="border: 2px solid #dee2e6;">
+
+                            <!-- Additional Information Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="d-flex align-items-center mb-4">
+                                        <div class="step-number me-3" style="background: #6c757d;">8</div>
+                                        <h4 class="mb-0">Additional Information & Other Files</h4>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12 mb-4">
+                                    <label for="additionalInfo" class="form-label">Additional Project Details</label>
                                     <textarea id="additionalInfo" name="additionalInfo" class="form-control" rows="4" placeholder="Please provide any additional details about your project, including shed dimensions, materials, or special requirements..."></textarea>
                                 </div>
+                                
                                 <div class="col-12 mb-3">
-                                    <label for="attachment" class="form-label">Upload Plans or Site Photos (Optional)</label>
-                                    <input type="file" id="attachment" name="attachment" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
-                                    <div class="form-text">PDF, images, or documents up to 10MB</div>
+                                    <label for="attachment" class="form-label">Any Other Important Attachments</label>
+                                    <input type="file" id="attachment" name="attachment" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.zip">
+                                    <div class="form-text">
+                                        <strong>For multiple files:</strong> Please zip them together. 
+                                        <br>Examples: Building plans, site photos, sketches, or any other documents relevant to your project. 
+                                        <br>Accepted formats: PDF, images, documents, or ZIP files up to 10MB.
+                                    </div>
                                 </div>
                             </div>
 

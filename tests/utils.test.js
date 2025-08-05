@@ -104,6 +104,67 @@ describe('Utility Functions', () => {
       expect(attachments[0].filename).toBe('test-document.pdf');
     });
 
+    it('should handle multiple file upload properties correctly', () => {
+      const mockFiles = {
+        attachment: [{
+          path: 'uploads/test-file-123',
+          originalname: 'test-document.pdf',
+          mimetype: 'application/pdf',
+          size: 1024
+        }],
+        section32: [{
+          path: 'uploads/section32-456',
+          originalname: 'section32-statement.pdf',
+          mimetype: 'application/pdf',
+          size: 2048
+        }],
+        propertyTitle: [{
+          path: 'uploads/title-789',
+          originalname: 'property-title.pdf',
+          mimetype: 'application/pdf',
+          size: 1536
+        }]
+      };
+      
+      // Test attachment file
+      const attachmentPath = mockFiles.attachment[0].path;
+      const attachmentFilename = mockFiles.attachment[0].originalname;
+      
+      // Test section32 file
+      const section32Path = mockFiles.section32[0].path;
+      const section32Filename = mockFiles.section32[0].originalname;
+      
+      // Test property title file
+      const titlePath = mockFiles.propertyTitle[0].path;
+      const titleFilename = mockFiles.propertyTitle[0].originalname;
+      
+      const attachments = [
+        {
+          filename: attachmentFilename,
+          path: attachmentPath
+        },
+        {
+          filename: section32Filename,
+          path: section32Path
+        },
+        {
+          filename: titleFilename,
+          path: titlePath
+        }
+      ];
+
+      expect(attachmentPath).toBe('uploads/test-file-123');
+      expect(attachmentFilename).toBe('test-document.pdf');
+      expect(section32Path).toBe('uploads/section32-456');
+      expect(section32Filename).toBe('section32-statement.pdf');
+      expect(titlePath).toBe('uploads/title-789');
+      expect(titleFilename).toBe('property-title.pdf');
+      expect(attachments).toHaveLength(3);
+      expect(attachments[0].filename).toBe('test-document.pdf');
+      expect(attachments[1].filename).toBe('section32-statement.pdf');
+      expect(attachments[2].filename).toBe('property-title.pdf');
+    });
+
     it('should handle missing file gracefully', () => {
       const mockFile = null;
       

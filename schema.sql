@@ -26,7 +26,12 @@ CREATE TABLE IF NOT EXISTS public.history
     message TEXT NOT NULL,
     location VARCHAR(255),
     file VARCHAR(255),
-    original_filename VARCHAR(255)
+    original_filename VARCHAR(255),
+    -- New fields for multiple file uploads
+    section32_file VARCHAR(255),
+    section32_filename VARCHAR(255),
+    property_title_file VARCHAR(255),
+    property_title_filename VARCHAR(255)
 );
 COMMENT ON TABLE history IS 'Historical log of all customer interactions including emails, callbacks, and form submissions';
 COMMENT ON COLUMN history.id IS 'Primary key - unique identifier for each history record';
@@ -36,8 +41,12 @@ COMMENT ON COLUMN history.replyto IS 'Customer email address for replies and fol
 COMMENT ON COLUMN history.subject IS 'Subject line or title of the customer interaction';
 COMMENT ON COLUMN history.message IS 'Main content of the customer message or interaction details';
 COMMENT ON COLUMN history.location IS 'Geographic location information derived from IP address';
-COMMENT ON COLUMN history.file IS 'File path for any attachments uploaded by the customer';
-COMMENT ON COLUMN history.original_filename IS 'Original name of uploaded file as provided by customer';
+COMMENT ON COLUMN history.file IS 'File path for general attachments (shed plans, photos) uploaded by the customer';
+COMMENT ON COLUMN history.original_filename IS 'Original name of general attachment file as provided by customer';
+COMMENT ON COLUMN history.section32_file IS 'File path for Section 32 statement uploaded by the customer';
+COMMENT ON COLUMN history.section32_filename IS 'Original name of Section 32 file as provided by customer';
+COMMENT ON COLUMN history.property_title_file IS 'File path for property title/plan uploaded by the customer';
+COMMENT ON COLUMN history.property_title_filename IS 'Original name of property title/plan file as provided by customer';
 
 
 
