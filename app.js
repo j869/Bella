@@ -15,6 +15,7 @@
  */
 
 const express = require('express');
+const session = require('express-session');
 const multer = require('multer');
 const axios = require('axios');
 const port = 3000;
@@ -285,6 +286,18 @@ app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res)
  */
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
+
+// Session middleware configuration
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'fallback-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { 
+        secure: false, // Set to true if using HTTPS
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
+
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -371,6 +384,7 @@ app.get('/', (req, res) => {
  */
 app.post('/submit-estimate-request', upload.single('attachment'), async (req, res) => {
     console.log('em1        USER('+ req.clientIp + ') submitted estimate request');
+    console.log('em12         ...sessionID:', req.sessionID);
     console.log('em11         ...body:', req.body || {});
     
     // Check if this is a test environment (for unit tests)
@@ -434,7 +448,7 @@ app.post('/submit-estimate-request', upload.single('attachment'), async (req, re
                 customer_name,
                 customer_phone,
                 customer_ip,
-                created_time,
+                created_at,
                 last_seen_time,
                 form_data,
                 notes 
@@ -455,7 +469,7 @@ app.post('/submit-estimate-request', upload.single('attachment'), async (req, re
             customerName,               // $4 - customer_name (from form)
             phone,                      // $5 - customer_phone (from form)
             req.clientIp || null,       // $6 - customer_ip (from middleware)
-            new Date(),                 // $7 - created_time
+            new Date(),                 // $7 - created_at
             new Date(),                 // $8 - last_seen_time
             formDataJson,               // $9 - form_data as JSON
             newNotes                    // $10 - notes
@@ -473,7 +487,8 @@ app.post('/submit-estimate-request', upload.single('attachment'), async (req, re
 
 
     // Redirect to create checkout session with the form data
-    return res.redirect(307, '/create-checkout-session');
+    const redirectUrl = `/create-checkout-session?customerEmail=${encodeURIComponent(customerEmail)}`;
+    return res.redirect(307, redirectUrl);
 
 
 });
@@ -587,6 +602,10 @@ Submitted: ${currentDate.toLocaleString('en-AU')}`;
  */
 app.get("/success", async (req, res) => {
     try {
+        console.log('ps1        USER('+ req.clientIp + ') submitted estimate request');
+        console.log('ps12         ...sessionID:', req.sessionID);
+        console.log('ps11         ...body:', req.body || {});
+
         const sessionId = req.query.session_id;
         let newNotes = ``
         newNotes = newNotes + `ps1    [${new Date().toISOString()}] Payment completed successfully via Stripe. \n`;
@@ -601,7 +620,7 @@ app.get("/success", async (req, res) => {
 
         // Retrieve the checkout session to get metadata
         const session = await stripe.checkout.sessions.retrieve(sessionId);
-        console.log("ps2    Payment successful, processing estimate request:", session.metadata);
+        console.log("ps2    session metadata:", session.metadata);
 
         // Extract customer email from session (either from metadata or customer_email)
         const customerEmail = session.metadata?.customerEmail || session.customer_details?.email || session.customer_email || null;
@@ -614,40 +633,35 @@ app.get("/success", async (req, res) => {
 
         // Extract estimate request data from metadata (if not available use dummy data)
         const {
-            referenceNumber = 'unknown',     //this must only come from the initial form submission
-            subject = 'Building Permit Cost Estimate Request',
-            customerName = 'Customer',
-            customerPhone = 'Not provided',
-            clientIp = 'payment-portal',
-            hasFullFormData = 'false',
-            emailMessage: storedEmailMessage
+            referenceNumber = session.metadata?.referenceNumber ,     //this must only come from the initial form submission
+            customerName = session.metadata?.customerName,
+            customerPhone = session.metadata?.customerPhone,
+            clientIp = session.metadata?.clientIp,
+            hasFullFormData = session.metadata?.hasFullFormData || 'false' 
         } = session.metadata || {};
 
-        let emailMessage;
-        if (hasFullFormData === 'true' && storedEmailMessage) {
-            emailMessage = storedEmailMessage || 'no stored email message';
-        }
 
         // Send thank you email to customer with payment confirmation
         const customerTemplateData = { referenceNumber, session };
-        const customerEmailTemplate = emailTemplates.getCustomerPaymentConfirmationTemplate(customerTemplateData);
+        const customerEmailTemplate = emailTemplates.getCustomerInvoiceThankyou(customerTemplateData);
 
         await sendEmail({
             to: customerEmail,
             bcc: "john@buildingbb.com.au",
-            subject: `Payment Confirmed - Building Permit Estimate [Ref: ${referenceNumber}]`,
+            subject: `Your confirmation receipt - Victorian Permit Applications [Ref: ${referenceNumber}]`,
             html: customerEmailTemplate.html,
             text: customerEmailTemplate.text
         });
         newNotes = newNotes + `ps1    Customer confirmation email sent to ${customerEmail}. \n`;
 
         // Send notification email to business team with payment proof
+        const subject = `Building Permit Cost Estimate Request`;
         const businessTemplateData = {
             referenceNumber,
             subject,
             customerEmail,
             clientIp,
-            emailMessage,
+            emailMessage: `Payment completed for building permit estimate - Reference: ${referenceNumber}`,
             session
         };
         const businessEmailTemplate = emailTemplates.getBusinessNotificationTemplate(businessTemplateData);
@@ -803,7 +817,7 @@ app.get("/cancel", async (req, res) => {
     try {
         const findResult = await pool.query(findExistingQuery, [req.sessionID, req.clientIp]);
         existingRecord = findResult.rows[0] || null;
-        console.log('ps1b   Existing customer record found:', existingRecord ? `YES (${existingRecord.customer_email})` : 'NO');
+        console.log('ps13   Existing customer record found:', existingRecord ? `YES (${existingRecord.customer_email})` : 'NO');
         
         if (existingRecord) {
             newNotes += `ps1c   Found customer record: ${existingRecord.customer_email} (${existingRecord.reference_number})\n`;
@@ -854,19 +868,78 @@ app.get("/cancel", async (req, res) => {
  * @returns {Redirect} Redirects to Stripe checkout page
  */
 app.post("/create-checkout-session", async (req, res) => {
+
     try {
+        console.log('ps1        USER('+ req.clientIp + ') submitted estimate request');
+        console.log('ps12         ...sessionID:', req.sessionID);
+        console.log('ps13         ...req.queryEmail:', req.query.customerEmail);
+        console.log('ps11         ...body:', req.body || {});
+        
         // Extract the required data for payment processing
-        console.log('ps8    Body:', req.body);
+        console.log('ps2    Body:', req.body);
         let newNotes = ``;
 
         // Make req.body optional - handle cases where redirect didn't preserve body data
         const requestData = req.body || {};
-        const { customerEmail, referenceNumber, customerName, customerPhone, hasFullFormData } = requestData;
+        let { customerEmail, referenceNumber, customerName, customerPhone, hasFullFormData } = requestData;
         
-        if (!customerEmail) {
-            console.log('ps9    No customer email found in request, creating basic checkout session');
-            newNotes = newNotes + `ps9      !lost customer email\n`;
+        if (!customerEmail || !referenceNumber || !customerName || !customerPhone) {
+            console.log('ps51    No customer data found in request, recreating from database with sessionID and req.query.customeremail');
+            newNotes = newNotes + `ps51      !lost customer data, attempting database recovery\n`;
+            
+            // Try to get customer email from query params if not in body
+            const queryCustomerEmail = req.query.customerEmail;
+            
+            // Query database for customer information using session ID or email from query
+            const findCustomerQuery = `
+                SELECT reference_number, customer_email, customer_name, customer_phone, web_session_id
+                FROM customer_purchases 
+                WHERE (web_session_id = $1 AND web_session_id IS NOT NULL) 
+                   OR (customer_email = $2 AND customer_email IS NOT NULL)
+                   OR (customer_ip = $3 AND customer_ip IS NOT NULL)
+                ORDER BY created_at DESC
+                LIMIT 1
+            `;
+            
+            try {
+                const findResult = await pool.query(findCustomerQuery, [
+                    req.sessionID || null,
+                    queryCustomerEmail || null,
+                    req.clientIp || null
+                ]);
+                
+                if (findResult.rows.length > 0) {
+                    const dbCustomer = findResult.rows[0];
+                    console.log('ps52    Found customer in database:', dbCustomer.customer_email);
+                    
+                    // Restore customer data from database
+                    customerEmail = customerEmail || dbCustomer.customer_email;
+                    referenceNumber = referenceNumber || dbCustomer.reference_number;
+                    customerName = customerName || dbCustomer.customer_name;
+                    customerPhone = customerPhone || dbCustomer.customer_phone;
+
+                    // Log for debugging:
+                    if (req.sessionID == dbCustomer.web_session_id) {
+                        console.log('ps50    Session ID matches database record:', dbCustomer.web_session_id);
+                    } else {
+                        console.log('ps50    Session ID does not match database record:', dbCustomer.web_session_id, ' compared to current req.sessionID: ', req.sessionID);
+                    }
+                    
+                    newNotes = newNotes + `ps52      Successfully recovered customer data from database: ${dbCustomer.customer_email}\n`;
+                } else {
+                    console.log('ps53    No customer found in database, using query parameter if available');
+                    customerEmail = customerEmail || queryCustomerEmail || null;
+                    newNotes = newNotes + `ps53      No database match found, using query email: ${queryCustomerEmail || 'none'}\n`;
+                }
+                
+            } catch (dbError) {
+                console.error('ps54    Error querying database for customer info:', dbError);
+                customerEmail = customerEmail || queryCustomerEmail || null;
+                newNotes = newNotes + `ps54      Database error, fallback to query email: ${queryCustomerEmail || 'none'}\n`;
+            }
         }
+        // Log the final customer data we have after recovery attempt
+        console.log('ps55    Final customer data - Email:', customerEmail, 'Ref:', referenceNumber, 'Name:', customerName, 'Phone:', customerPhone);
         
         // Create Stripe session configuration
         const sessionConfig = {
@@ -891,12 +964,10 @@ app.post("/create-checkout-session", async (req, res) => {
                 referenceNumber: referenceNumber || 'unknown',
                 customerEmail: customerEmail || 'not-provided',
                 customerName: customerName || 'Customer',
-                customerPhone: customerPhone || 'Not provided',
-                clientIp: req.clientIp || 'payment-portal',
-                hasFullFormData: hasFullFormData ? 'true' : 'false'
+                customerPhone: customerPhone || 'Not provided'
             }
         };
-        console.log('ps5    Session configuration:', sessionConfig);
+        console.log('ps5    initialising stripe session configuration:', sessionConfig);
             newNotes = newNotes + `ps9      !lost customer email\n`;
 
         // Pre-populate email on Stripe payment form only if customer email is available
@@ -905,7 +976,7 @@ app.post("/create-checkout-session", async (req, res) => {
         }
         
         const session = await stripe.checkout.sessions.create(sessionConfig);
-        console.log('ps9   Checkout session created successfully:', session.id);
+        console.log('ps91   Checkout session created successfully:', session.id);
 
         //#region update customer job details 
         // Insert/Update customer purchase tracking record - find existing record first

@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS public.customer_purchases
 (
     id SERIAL PRIMARY KEY,
     -- Reference and Payment Information
-    reference_number VARCHAR(50) UNIQUE NOT NULL,           -- e.g., BPE-12345678-ABCD
+    reference_number VARCHAR(50) UNIQUE,           -- e.g., BPE-12345678-ABCD
     stripe_payment_intent_id VARCHAR(255),                  -- Stripe PaymentIntent ID
     stripe_checkout_session_id VARCHAR(255),                -- Stripe Checkout Session ID
     stripe_customer_id VARCHAR(255),                        -- Stripe Customer ID (if created)
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS public.customer_purchases
     customer_email VARCHAR(255),
     customer_phone VARCHAR(50),
     customer_ip VARCHAR(45),                                -- IP address when form was submitted
-    web_session_id VARCHAR(255) NOT NULL,  -- Web session ID for tracking user session
+    web_session_id VARCHAR(255),  -- Web session ID for tracking user session
     -- Timing Information
     first_visit_time TIMESTAMP WITHOUT TIME ZONE,          -- When customer first loaded the form
     form_submitted_time TIMESTAMP WITHOUT TIME ZONE,       -- When estimate request was submitted

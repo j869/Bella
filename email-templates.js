@@ -412,9 +412,150 @@ function sysAdminNewCustomerAlert(data) {
     return { html, text };
 }
 
+/**
+ * Customer invoice thank you email template
+ * 
+ * @param {Object} data - Template data
+ * @param {string} data.referenceNumber - Customer reference number
+ * @param {Object} data.session - Stripe session object with payment details
+ * @returns {Object} Email template with html and text versions
+ */
+function getCustomerInvoiceThankyou(data) {
+    const { referenceNumber, session } = data;
+    
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You - Victorian Permit Applications</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+        .payment-box { background: #d4edda; border: 2px solid #28a745; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; }
+        .reference-box { background: #fff; border: 2px solid #007bff; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; }
+        .reference-number { font-size: 24px; font-weight: bold; color: #007bff; font-family: 'Courier New', monospace; }
+        .payment-details { font-size: 18px; font-weight: bold; color: #28a745; }
+        .contact-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #28a745; }
+        .highlight { background: #ffc107; color: #000; padding: 15px; border-radius: 4px; margin: 20px 0; font-weight: bold; }
+        .footer { text-align: center; margin-top: 30px; padding: 20px; color: #666; font-size: 14px; }
+        .next-steps { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-top: 3px solid #dc3545; }
+        .step-list { margin: 15px 0; }
+        .step-list li { margin: 8px 0; }
+        .contact-info { background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 10px 0; }
+        .amount { font-size: 20px; font-weight: bold; color: #28a745; }
+        .transaction-id { font-family: 'Courier New', monospace; font-size: 14px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎉 Thank You for Your Purchase!</h1>
+        <p>Your building permit estimate request has been received and payment confirmed</p>
+    </div>
+    
+    <div class="content">
+        <div class="payment-box">
+            <div class="payment-details">✅ Payment Confirmed</div>
+            <div class="amount">$55.00 AUD</div>
+            <div class="transaction-id">Transaction ID: ${session.payment_intent || session.id}</div>
+        </div>
+        
+        <div class="reference-box">
+            <p><strong>Your Reference Number:</strong></p>
+            <div class="reference-number">${referenceNumber}</div>
+            <p style="margin-top: 15px; color: #666; font-size: 14px;">
+                Please keep this reference number for your records
+            </p>
+        </div>
+        
+        <div class="highlight">
+            🚀 Your building permit estimate is now being processed by our expert team!
+        </div>
+        
+        <div class="next-steps">
+            <h3 style="color: #dc3545; margin-top: 0;">📋 What Happens Next?</h3>
+            <ul class="step-list">
+                <li><strong>Within 24-48 hours:</strong> Our team will review your project details</li>
+                <li><strong>Initial Assessment:</strong> We'll analyze your building requirements and local council regulations</li>
+                <li><strong>Cost Estimation:</strong> Detailed breakdown of permit fees and processing costs</li>
+                <li><strong>Expert Guidance:</strong> Recommendations for smooth permit approval</li>
+                <li><strong>Direct Contact:</strong> Personal consultation if needed</li>
+            </ul>
+        </div>
+        
+        <div class="contact-box">
+            <h3 style="color: #28a745; margin-top: 0;">📞 Need Help? Contact Our Team</h3>
+            <div class="contact-info">
+                <p><strong>Email:</strong> ${process.env.QUOTE_MANAGER_EMAIL || 'alex@buildingbb.com.au'}</p>
+                <p><strong>Phone:</strong> 0429 815 177</p>
+                <p><strong>Business Hours:</strong> Monday - Friday, 9:00 AM - 5:00 PM AEST</p>
+            </div>
+            <p style="margin-top: 15px; color: #666; font-size: 14px;">
+                <em>Our permit specialists are here to guide you through every step of the process</em>
+            </p>
+        </div>
+        
+        <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; border-left: 4px solid #007bff; margin: 20px 0;">
+            <h4 style="color: #007bff; margin-top: 0;">💡 Pro Tip</h4>
+            <p style="margin-bottom: 0;">
+                Start gathering your building plans and site documentation now. 
+                Our team will provide a detailed checklist of required documents based on your specific project.
+            </p>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p><strong>Victorian Permit Applications</strong></p>
+        <p>Making building permits simple and stress-free</p>
+        <p style="font-size: 12px; color: #999;">
+            This is an automated confirmation email. If you have any questions, please contact us using the details above.
+        </p>
+    </div>
+</body>
+</html>`;
+
+    const text = `
+VICTORIAN PERMIT APPLICATIONS - PAYMENT CONFIRMATION
+
+Thank you for your purchase!
+
+PAYMENT DETAILS:
+✅ Payment Confirmed: $55.00 AUD
+Transaction ID: ${session.payment_intent || session.id}
+
+YOUR REFERENCE NUMBER: ${referenceNumber}
+(Please keep this reference number for your records)
+
+WHAT HAPPENS NEXT?
+• Within 24-48 hours: Our team will review your project details
+• Initial Assessment: We'll analyze your building requirements and local council regulations  
+• Cost Estimation: Detailed breakdown of permit fees and processing costs
+• Expert Guidance: Recommendations for smooth permit approval
+• Direct Contact: Personal consultation if needed
+
+CONTACT OUR TEAM:
+Email: ${process.env.QUOTE_MANAGER_EMAIL || 'alex@buildingbb.com.au'}
+Phone: 0429 815 177
+Business Hours: Monday - Friday, 9:00 AM - 5:00 PM AEST
+
+PRO TIP: Start gathering your building plans and site documentation now. Our team will provide a detailed checklist of required documents based on your specific project.
+
+---
+Victorian Permit Applications
+Making building permits simple and stress-free
+
+This is an automated confirmation email. If you have any questions, please contact us using the details above.
+`;
+
+    return { html, text };
+}
+
 module.exports = {
     getCustomerPaymentConfirmationTemplate,
     getBusinessNotificationTemplate,
     getCallbackRequestTemplate,
-    sysAdminNewCustomerAlert
+    sysAdminNewCustomerAlert,
+    getCustomerInvoiceThankyou
 };
