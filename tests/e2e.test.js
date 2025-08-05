@@ -222,7 +222,7 @@ describe('E2E: Contact Page User Journeys', () => {
         data: {
           object: {
             id: 'pi_test_123',
-            amount: 5500,
+            amount: parseInt(process.env.ESTIMATE_FEE) || 5500,
             currency: 'aud'
           }
         }

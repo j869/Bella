@@ -139,7 +139,7 @@ describe('Stripe Payment Integration', () => {
         data: { 
           object: { 
             id: 'pi_test_123456',
-            amount: 5500,
+            amount: parseInt(process.env.ESTIMATE_FEE) || 5500,
             currency: 'aud',
             status: 'succeeded',
             created: Math.floor(Date.now() / 1000),
@@ -308,7 +308,7 @@ describe('Stripe Payment Integration', () => {
         data: { 
           object: { 
             id: 'pi_test_123456',
-            amount: 5500,
+            amount: parseInt(process.env.ESTIMATE_FEE) || 5500,
             currency: 'aud',
             status: 'succeeded'
           } 
@@ -337,7 +337,7 @@ describe('Stripe Payment Integration', () => {
         data: { 
           object: { 
             id: 'ch_test_123456',
-            amount: 5500,
+            amount: parseInt(process.env.ESTIMATE_FEE) || 5500,
             currency: 'aud',
             status: 'succeeded'
           } 

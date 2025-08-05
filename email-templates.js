@@ -47,7 +47,7 @@ function getCustomerPaymentConfirmationTemplate(data) {
     
     <div class="content">
         <div class="payment-box">
-            <div class="payment-details">Payment Successful: $55.00 AUD</div>
+            <div class="payment-details">Payment Successful: $${((process.env.ESTIMATE_FEE || 5500) / 100).toFixed(2)} AUD</div>
             <p><small>Transaction ID: ${session.payment_intent}</small></p>
             <p><small>Payment Method: ${session.payment_method_types ? session.payment_method_types.join(', ') : 'Card'}</small></p>
         </div>
@@ -76,7 +76,7 @@ function getCustomerPaymentConfirmationTemplate(data) {
             <li>Our expert team will review your project requirements</li>
             <li>We'll identify all applicable permits and regulations</li>
             <li>You'll receive a detailed cost breakdown and timeline</li>
-            <li><strong>If you proceed with our full service, we'll credit the $55 back to your final bill!</strong></li>
+            <li><strong>If you proceed with our full service, we'll credit the $${((process.env.ESTIMATE_FEE || 5500) / 100).toFixed(2)} back to your final bill!</strong></li>
         </ul>
 
         <p>Thank you for choosing our building permit expertise!</p>

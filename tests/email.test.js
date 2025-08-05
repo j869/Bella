@@ -144,7 +144,7 @@ describe('Email Functionality Tests', () => {
             // Mock payment data
             const mockPaymentData = {
                 id: 'pi_test_12345',
-                amount: 5500,
+                amount: parseInt(process.env.ESTIMATE_FEE) || 5500,
                 currency: 'aud',
                 status: 'succeeded',
                 created: Math.floor(Date.now() / 1000),

@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS public.customer_purchases
     stripe_payment_intent_id VARCHAR(255),                  -- Stripe PaymentIntent ID
     stripe_checkout_session_id VARCHAR(255),                -- Stripe Checkout Session ID
     stripe_customer_id VARCHAR(255),                        -- Stripe Customer ID (if created)
-    payment_amount INTEGER,                                 -- Amount in cents (e.g., 5500 for $55.00)
+    payment_amount INTEGER,                                 -- Amount in cents (configurable via ESTIMATE_FEE env var)
     payment_currency VARCHAR(3) DEFAULT 'AUD',             -- Currency code
     payment_status VARCHAR(50),                             -- succeeded, pending, failed, etc.
     -- Customer Information
@@ -95,7 +95,7 @@ COMMENT ON COLUMN customer_purchases.reference_number IS 'Unique reference numbe
 COMMENT ON COLUMN customer_purchases.stripe_payment_intent_id IS 'Stripe PaymentIntent ID for tracking payment in Stripe dashboard';
 COMMENT ON COLUMN customer_purchases.stripe_checkout_session_id IS 'Stripe Checkout Session ID for linking to Stripe session data';
 COMMENT ON COLUMN customer_purchases.stripe_customer_id IS 'Stripe Customer ID if a customer record was created in Stripe';
-COMMENT ON COLUMN customer_purchases.payment_amount IS 'Payment amount in cents (e.g., 5500 for $55.00 AUD)';
+COMMENT ON COLUMN customer_purchases.payment_amount IS 'Payment amount in cents (configurable via ESTIMATE_FEE environment variable)';
 COMMENT ON COLUMN customer_purchases.payment_currency IS 'Currency code for the payment (defaults to AUD)';
 COMMENT ON COLUMN customer_purchases.payment_status IS 'Payment status from Stripe (succeeded, pending, failed, etc.)';
 COMMENT ON COLUMN customer_purchases.customer_name IS 'Customer full name as provided in the form';
@@ -148,7 +148,7 @@ INSERT INTO customer_purchases (
     $1,  -- referenceNumber from session.metadata
     $2,  -- session.payment_intent
     $3,  -- session.id (checkout session ID)
-    5500, -- hardcoded $55.00 AUD in cents
+    -- Amount should use ESTIMATE_FEE environment variable in actual code,
     'AUD',
     $4,  -- session.payment_status
     $5,  -- customerName from session.metadata

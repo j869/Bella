@@ -244,7 +244,7 @@ describe('Utility Functions', () => {
               product_data: {
                 name: 'T-shirt',
               },
-              unit_amount: 5500,
+              unit_amount: parseInt(process.env.ESTIMATE_FEE) || 5500,
             },
             quantity: 1,
           },
@@ -256,7 +256,7 @@ describe('Utility Functions', () => {
 
       expect(sessionConfig.line_items).toHaveLength(1);
       expect(sessionConfig.line_items[0].price_data.currency).toBe('aud');
-      expect(sessionConfig.line_items[0].price_data.unit_amount).toBe(5500);
+      expect(sessionConfig.line_items[0].price_data.unit_amount).toBe(parseInt(process.env.ESTIMATE_FEE) || 5500);
       expect(sessionConfig.mode).toBe('payment');
       expect(sessionConfig.success_url).toBe('http://localhost:3000/success');
       expect(sessionConfig.cancel_url).toBe('http://localhost:3000/cancel');

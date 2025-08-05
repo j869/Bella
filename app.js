@@ -379,10 +379,14 @@ app.get('/', (req, res) => {
  * @param {Object} res - Express response object
  * @param {string} req.body.customerEmail - Customer email address
  * @param {string} req.body.phone - Customer phone number
- * @param {File} req.file - Optional file attachment
+ * @param {Object} req.files - Optional file attachments (section32, propertyTitle, attachment)
  * @returns {String} Thank you page with reference number
  */
-app.post('/submit-estimate-request', upload.single('attachment'), async (req, res) => {
+app.post('/submit-estimate-request', upload.fields([
+    { name: 'section32', maxCount: 1 },
+    { name: 'propertyTitle', maxCount: 1 },
+    { name: 'attachment', maxCount: 1 }
+]), async (req, res) => {
     console.log('em1        USER('+ req.clientIp + ') submitted estimate request');
     console.log('em12         ...sessionID:', req.sessionID);
     console.log('em11         ...body:', req.body || {});
@@ -459,8 +463,12 @@ app.post('/submit-estimate-request', upload.single('attachment'), async (req, re
         // Prepare form data as JSON for storage
         const formDataJson = {
             originalFormSubmission: req.body,
-            hasFileAttachment: req.file ? true : false,
-            fileName: req.file ? req.file.originalname : null
+            hasFileAttachment: req.files && Object.keys(req.files).length > 0,
+            files: req.files ? {
+                section32: req.files.section32 ? req.files.section32[0].originalname : null,
+                propertyTitle: req.files.propertyTitle ? req.files.propertyTitle[0].originalname : null,
+                attachment: req.files.attachment ? req.files.attachment[0].originalname : null
+            } : null
         };
         
         const insertValues = [
@@ -629,7 +637,8 @@ app.get("/success", async (req, res) => {
         if (!customerEmail) {
             newNotes = newNotes + `ps3      !lost customer contact\n`;
             console.log("ps3    Payment successful but no customer email found");
-            return res.send(`Payment successful! Thank you for your $55 purchase. Please contact us at alex@buildingbb.com.au with your transaction ID: ${session.payment_intent} to process your estimate request.`);
+            const feeAmount = ((process.env.ESTIMATE_FEE || 5500) / 100).toFixed(2);
+            return res.send(`Payment successful! Thank you for your $${feeAmount} purchase. Please contact us at alex@buildingbb.com.au with your transaction ID: ${session.payment_intent} to process your estimate request.`);
         }
 
         // Extract estimate request data from metadata (if not available use dummy data)
@@ -715,7 +724,7 @@ app.get("/success", async (req, res) => {
             const updateValues = [
                 session.payment_intent,      // $1 - only set if not already set
                 sessionId,                   // $2 - only set if not already set
-                5500,                       // $3 - only set if not already set
+                parseInt(process.env.ESTIMATE_FEE) || 5500,  // $3 - only set if not already set
                 session.payment_status,     // $4 - always update payment status
                 new Date(),                 // $5 - only set if not already set
                 new Date(),                 // $6 - always update last seen
@@ -757,7 +766,7 @@ app.get("/success", async (req, res) => {
                 referenceNumber,            // $1 - reference_number
                 session.payment_intent,     // $2 - stripe_payment_intent_id
                 sessionId,                  // $3 - stripe_checkout_session_id
-                5500,                      // $4 - payment_amount
+                parseInt(process.env.ESTIMATE_FEE) || 5500,  // $4 - payment_amount
                 'AUD',                     // $5 - payment_currency
                 session.payment_status,    // $6 - payment_status
                 customerName,              // $7 - customer_name
@@ -952,7 +961,7 @@ app.post("/create-checkout-session", async (req, res) => {
                     name: 'Building Permit Estimate Service',
                     description: 'Professional building permit cost estimate with expert guidance',
                 },
-                unit_amount: process.env.ESTIMATE_FEE, // $55.00 AUD
+                unit_amount: parseInt(process.env.ESTIMATE_FEE) || 5500, // Amount in cents from env var
                 },
                 quantity: 1,
             },
@@ -1014,7 +1023,7 @@ app.post("/create-checkout-session", async (req, res) => {
             
             const updateValues = [
                 session.id,                 // $1 - stripe_checkout_session_id (only set if not already set)
-                process.env.ESTIMATE_FEE,  // $2 - payment_amount (only set if not already set)
+                parseInt(process.env.ESTIMATE_FEE) || 5500,  // $2 - payment_amount (only set if not already set)
                 null,                      // $3 - payment_currency (only set if not already set)
                 'pending',                  // $4 - payment_status (always update)
                 new Date(),                 // $5 - last_seen_time (always update)
@@ -1055,7 +1064,7 @@ app.post("/create-checkout-session", async (req, res) => {
                 customerPhone || 'Not provided', // $4 - customer_phone
                 req.clientIp || 'checkout-portal', // $5 - customer_ip
                 session.id,                 // $6 - stripe_checkout_session_id
-                process.env.ESTIMATE_FEE,  // $7 - payment_amount
+                parseInt(process.env.ESTIMATE_FEE) || 5500,  // $7 - payment_amount
                 null,                       // $8 - payment_currency
                 'pending',                 // $9 - payment_status
                 null,                       // $10 - created_time
@@ -1222,10 +1231,11 @@ function buildEstimateEmailMessage(formData) {
     }
     
     // Add footer with estimate service information
+    const feeAmount = ((process.env.ESTIMATE_FEE || 5500) / 100).toFixed(2);
     message += '---\n';
     message += 'This estimate request was submitted via the building permit website.\n';
-    message += 'Please note: This is a $55 estimate service to provide you with a preliminary cost assessment.\n';
-    message += 'This estimate is not a final quote. The $55 will be credited back if you proceed with our services.\n';
+    message += `Please note: This is a $${feeAmount} estimate service to provide you with a preliminary cost assessment.\n`;
+    message += `This estimate is not a final quote. The $${feeAmount} will be credited back if you proceed with our services.\n`;
     message += `Submitted: ${new Date().toLocaleString('en-AU')}\n`;
     
     return message;
