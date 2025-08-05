@@ -20,5 +20,8 @@ module.exports = {
     }
   },
   testTimeout: 10000,
-  verbose: true
+  verbose: true,
+  forceExit: true,
+  detectOpenHandles: true,
+  maxWorkers: 1
 };

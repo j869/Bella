@@ -1,6 +1,26 @@
 # Contact Page Application
 
-A full-featured contact form application built with Node.js and Express that supports SMS, email, file uploads, and payment processing.
+A full-featured c```env
+# Database Configuration
+PG_USER=your_postgres_username
+PG_HOST=localhost
+PG_DATABASE=contact
+PG_PASSWORD=your_postgres_password
+PG_PORT=5432
+
+# Twilio Configuration
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_ACCESS_TOKEN=your_twilio_auth_token
+
+# Email Configuration
+SMTP_EMAIL=your_smtp_email@domain.com
+SMTP_PASSWORD=your_smtp_password
+QUOTE_MANAGER_EMAIL=manager@yourdomain.com
+
+# Stripe Configuration
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+
 
 ## Features
 
@@ -109,8 +129,12 @@ The application will be available at `http://localhost:3000`
 - **Response**: Redirects to Stripe checkout page
 
 ### POST /webhook
-- **Description**: Handles Stripe webhook events
+- **Description**: Handles Stripe webhook events and sends purchase notifications
 - **Headers**: `stripe-signature` required
+- **Features**: 
+  - Verifies webhook signatures for security
+  - Sends email notifications to quote manager on successful payments
+  - Logs all webhook events and notifications to database
 - **Response**: Webhook acknowledgment
 
 ## Database Schema

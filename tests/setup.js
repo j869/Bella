@@ -26,6 +26,12 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
+// Global cleanup after all tests
+afterAll(async () => {
+  // Force cleanup of any remaining handles
+  await new Promise(resolve => setTimeout(resolve, 100));
+});
+
 // Global error handler for unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);

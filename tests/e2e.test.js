@@ -91,25 +91,38 @@ const app = require('../app');
 
 describe('E2E: Contact Page User Journeys', () => {
   
-  describe('User sends SMS message', () => {
-    it('should complete SMS sending workflow', async () => {
+  // Clean up any open handles after all tests
+  afterAll(async () => {
+    // Close database connection if it exists and isn't mocked
+    if (app.pool && typeof app.pool.end === 'function') {
+      await app.pool.end();
+    }
+    
+    // Give a small delay to ensure cleanup completes
+    await new Promise(resolve => setTimeout(resolve, 100));
+  });
+  
+  describe('User sends callback request', () => {
+    it('should complete callback request workflow', async () => {
       // 1. User visits the main page
       const mainPageResponse = await request(app)
         .get('/')
         .expect(200);
       
-      expect(mainPageResponse.text).toContain('Send SMS');
+      expect(mainPageResponse.text).toContain('Request Callback');
       
-      // 2. User fills out SMS form and submits
-      const smsResponse = await request(app)
-        .post('/send-sms')
+      // 2. User fills out callback form and submits
+      const callbackResponse = await request(app)
+        .post('/send-email')
         .send({
-          to: '+1234567890',
-          message: 'Hello, this is a test message!'
+          firstName: 'John',
+          phone: '+1234567890',
+          email: 'john@example.com',
+          message: 'Please call me weekdays 9am-5pm'
         })
         .expect(200);
       
-      expect(smsResponse.text).toContain('Message sent');
+      expect(callbackResponse.text).toContain('Callback request submitted successfully');
     });
   });
 
@@ -120,22 +133,22 @@ describe('E2E: Contact Page User Journeys', () => {
         .get('/')
         .expect(200);
       
-      expect(mainPageResponse.text).toContain('Send Email');
+      expect(mainPageResponse.text).toContain('Get My Estimate');
       
       // 2. Create a test file for attachment
       const testFilePath = path.join(__dirname, 'test-attachment.txt');
       fs.writeFileSync(testFilePath, 'This is a test attachment file.');
       
-      // 3. User fills out email form with attachment and submits
+      // 3. User fills out estimate request form with attachment and submits
       const emailResponse = await request(app)
-        .post('/send-email')
+        .post('/submit-estimate-request')
         .field('emailTo', 'user@example.com')
-        .field('subject', 'Test Email with Attachment')
+        .field('subject', 'Building Permit Cost Estimate Request')
         .field('emailMessage', 'Please find the attached file.')
         .attach('attachment', testFilePath)
         .expect(200);
       
-      expect(emailResponse.text).toContain('Email sent');
+      expect(emailResponse.text).toContain('Thank You');
       
       // 4. Clean up test file
       fs.unlinkSync(testFilePath);
@@ -143,13 +156,13 @@ describe('E2E: Contact Page User Journeys', () => {
 
     it('should complete email sending workflow without attachment', async () => {
       const emailResponse = await request(app)
-        .post('/send-email')
+        .post('/submit-estimate-request')
         .field('emailTo', 'user@example.com')
-        .field('subject', 'Test Email without Attachment')
+        .field('subject', 'Building Permit Cost Estimate Request')
         .field('emailMessage', 'This is a simple email message.')
         .expect(200);
       
-      expect(emailResponse.text).toContain('Email sent');
+      expect(emailResponse.text).toContain('Thank You');
     });
   });
 
@@ -160,11 +173,16 @@ describe('E2E: Contact Page User Journeys', () => {
         .get('/')
         .expect(200);
       
-      expect(mainPageResponse.text).toContain('Checkout');
+      expect(mainPageResponse.text).toContain('Get My Estimate');
       
       // 2. User initiates checkout
       const checkoutResponse = await request(app)
         .post('/create-checkout-session')
+        .send({
+          emailTo: 'test@example.com',
+          subject: 'Building Permit Cost Estimate Request',
+          emailMessage: 'Test estimate request'
+        })
         .expect(303);
       
       expect(checkoutResponse.headers.location).toBeDefined();
@@ -224,33 +242,34 @@ describe('E2E: Contact Page User Journeys', () => {
   describe('Error scenarios', () => {
     it('should handle invalid email submission gracefully', async () => {
       const emailResponse = await request(app)
-        .post('/send-email')
+        .post('/submit-estimate-request')
         .field('emailTo', 'invalid-email')
         .field('subject', '')
         .field('emailMessage', '')
-        .expect(200);
+        .expect(200); // In test mode, always returns thank you page
       
-      // Should not crash, even with invalid data
-      expect(emailResponse.status).toBe(200);
+      // Should not crash, even with invalid data - just renders thank you page
+      expect(emailResponse.text).toContain('Thank You');
     });
 
-    it('should handle invalid SMS submission gracefully', async () => {
-      const smsResponse = await request(app)
-        .post('/send-sms')
+    it('should handle invalid callback submission gracefully', async () => {
+      const callbackResponse = await request(app)
+        .post('/send-email')
         .send({
-          to: '',
-          message: ''
+          phone: '+1234567890',
+          // Missing required firstName and email fields
+          message: 'Please call me'
         })
-        .expect(200);
+        .expect(400);
       
-      // Should not crash, even with empty data
-      expect(smsResponse.status).toBe(200);
+      // Should not crash, even with missing data
+      expect(callbackResponse.status).toBe(400);
     });
 
     it('should handle file upload errors gracefully', async () => {
-      // Try to upload a non-existent file
+      // Try to upload a file via the estimate form
       const emailResponse = await request(app)
-        .post('/send-email')
+        .post('/submit-estimate-request')
         .field('emailTo', 'test@example.com')
         .field('subject', 'Test')
         .field('emailMessage', 'Test message')
@@ -268,7 +287,7 @@ describe('E2E: Contact Page User Journeys', () => {
         .get('/')
         .expect(200);
       
-      expect(mainPage.text).toContain('Contact Page');
+      expect(mainPage.text).toContain('Building Permit Cost Estimate');
       
       // 2. User checks their location
       const location = await request(app)
@@ -277,30 +296,37 @@ describe('E2E: Contact Page User Journeys', () => {
       
       expect(location.body).toHaveProperty('ip');
       
-      // 3. User sends an SMS
-      const sms = await request(app)
-        .post('/send-sms')
+      // 3. User sends a callback request
+      const callback = await request(app)
+        .post('/send-email')
         .send({
-          to: '+1234567890',
-          message: 'Hello from the contact page!'
+          firstName: 'John',
+          phone: '+1234567890',
+          email: 'john@example.com',
+          message: 'Please call me after 6pm'
         })
         .expect(200);
       
-      expect(sms.text).toContain('Message sent');
+      expect(callback.text).toContain('Callback request submitted successfully');
       
-      // 4. User sends an email
+      // 4. User submits estimate request
       const email = await request(app)
-        .post('/send-email')
+        .post('/submit-estimate-request')
         .field('emailTo', 'user@example.com')
-        .field('subject', 'Contact Form Submission')
-        .field('emailMessage', 'This is my message via the contact form.')
+        .field('subject', 'Building Permit Cost Estimate Request')
+        .field('emailMessage', 'This is my estimate request.')
         .expect(200);
       
-      expect(email.text).toContain('Email sent');
+      expect(email.text).toContain('Thank You');
       
       // 5. User initiates payment
       const checkout = await request(app)
         .post('/create-checkout-session')
+        .send({
+          emailTo: 'user@example.com',
+          subject: 'Building Permit Cost Estimate Request',
+          emailMessage: 'Payment for estimate request'
+        })
         .expect(303);
       
       expect(checkout.headers.location).toBeDefined();
