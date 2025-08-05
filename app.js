@@ -76,7 +76,7 @@ const app = express();
  */
 async function sendEmail(emailOptions) {
     try {
-        console.log("dd1     sending email")
+        console.log(`dd1     sending '${emailOptions.subject}' to ${emailOptions.to}`)
         // Configure the transporter
         const transporter = nodemailer.createTransport({
             host: "cp-wc64.per01.ds.network",
@@ -396,7 +396,7 @@ app.post('/submit-estimate-request', upload.single('attachment'), async (req, re
     
     // Extract and validate required fields
     const { customerEmail, phone, customerName } = req.body;
-    let newNotes = `em1     found customer ${customerEmail}\n`;
+    let newNotes = `em1     creating new customer ${customerEmail}\n`;
 
     if (!customerEmail || !phone || !customerName) {
         return res.status(400).send('Missing required fields. Please provide your name, email address, and phone number.');
@@ -432,6 +432,7 @@ app.post('/submit-estimate-request', upload.single('attachment'), async (req, re
             console.error('em16   Error sending admin notification email:', emailError);
         });
         
+        console.log("em3     sent sysAdmin headsup email")
     } catch (templateError) {
         console.error('em16   Error generating admin notification template:', templateError);
     }
@@ -872,7 +873,7 @@ app.post("/create-checkout-session", async (req, res) => {
     try {
         console.log('ps1        USER('+ req.clientIp + ') submitted estimate request');
         console.log('ps12         ...sessionID:', req.sessionID);
-        console.log('ps13         ...req.queryEmail:', req.query.customerEmail);
+        console.log('ps13         ...req.query:', req.query);
         console.log('ps11         ...body:', req.body || {});
         
         // Extract the required data for payment processing
