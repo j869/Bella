@@ -8,7 +8,9 @@
     "dev": "nodemon app.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:emails": "node test-email-templates.js",
+    "test:with-emails": "SEND_TEST_EMAILS=true jest"
   },
   "author": "John",
   "license": "MIT",

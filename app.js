@@ -576,8 +576,8 @@ Submitted: ${currentDate.toLocaleString('en-AU')}`;
         const emailTemplate = emailTemplates.getCallbackRequestTemplate(templateData);
         
         const emailResult = await sendEmail({
-            to: "john@buildingbb.com.au",
-            cc: "alex@buildingbb.com.au",
+            to: process.env.ADMIN_EMAIL || "john@buildingbb.com.au",
+            cc: process.env.QUOTE_MANAGER_EMAIL || "alex@buildingbb.com.au",
             replyTo: email,
             subject: `📞 Callback Request from ${firstName} (${phone})`,
             html: emailTemplate.html,
@@ -653,11 +653,11 @@ app.get("/success", async (req, res) => {
 
         // Send thank you email to customer with payment confirmation
         const customerTemplateData = { referenceNumber, session };
-        const customerEmailTemplate = emailTemplates.getCustomerInvoiceThankyou(customerTemplateData);
+        const customerEmailTemplate = emailTemplates.getCustomerThankyouEmailTemplate(customerTemplateData);
 
         await sendEmail({
             to: customerEmail,
-            bcc: "john@buildingbb.com.au",
+            bcc: process.env.ADMIN_EMAIL || "john@buildingbb.com.au",
             subject: `Your confirmation receipt - Victorian Permit Applications [Ref: ${referenceNumber}]`,
             html: customerEmailTemplate.html,
             text: customerEmailTemplate.text
@@ -665,24 +665,23 @@ app.get("/success", async (req, res) => {
         newNotes = newNotes + `ps1    Customer confirmation email sent to ${customerEmail}. \n`;
 
         // Send notification email to business team with payment proof
-        const subject = `Building Permit Cost Estimate Request`;
-        const businessTemplateData = {
-            referenceNumber,
-            subject,
+        // Extract customer data from session metadata for detailed business notification
+        const customerData = {
+            customerName,
             customerEmail,
-            clientIp,
-            emailMessage: `Payment completed for building permit estimate - Reference: ${referenceNumber}`,
-            session
+            phone: customerPhone,
+            // Include any other form data from metadata if available
+            ...session.metadata
         };
-        const businessEmailTemplate = emailTemplates.getBusinessNotificationTemplate(businessTemplateData);
+        
+        const businessEmailTemplate = emailTemplates.getNotifyPermitEstimateProceedTemplate(customerData);
 
         await sendEmail({
-            to: process.env.QUOTE_MANAGER_EMAIL || "john@buildingbb.com.au",
-            cc: process.env.ADMIN_EMAIL || "alex@buildingbb.com.au,amandah@vicpa.com.au",
+            to: businessEmailTemplate.to,
+            cc: businessEmailTemplate.cc,
             replyTo: customerEmail,
-            subject: subject + ` [Ref: ${referenceNumber}] [PAID] (reply to ` + customerEmail + ')',
-            html: businessEmailTemplate.html,
-            text: businessEmailTemplate.text,
+            subject: businessEmailTemplate.subject,
+            text: businessEmailTemplate.text
         });
         newNotes = newNotes + `ps2    Business notification emails sent to ${process.env.QUOTE_MANAGER_EMAIL || "john@buildingbb.com.au"}. \n`;
         console.log('ps6    Confirmation emails sent after successful payment');
@@ -959,7 +958,7 @@ app.post("/create-checkout-session", async (req, res) => {
                 currency: 'aud',
                 product_data: {
                     name: 'Building Permit Estimate Service',
-                    description: 'Professional building permit cost estimate with expert guidance',
+                    description: 'Building permit cost estimate',
                 },
                 unit_amount: parseInt(process.env.ESTIMATE_FEE) || 5500, // Amount in cents from env var
                 },
@@ -1247,5 +1246,5 @@ module.exports.sendEmail = sendEmail;
 module.exports.sendPurchaseNotificationEmail = sendPurchaseNotificationEmail;
 module.exports.pool = pool;
 module.exports.emailTemplates = emailTemplates;
-module.exports.buildEstimateEmailMessage = buildEstimateEmailMessage;
+module.exports.buildEstimateEmailMessage = emailTemplates.buildEstimateEmailMessage;
 

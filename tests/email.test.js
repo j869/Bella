@@ -89,8 +89,8 @@ describe('Email Functionality Tests', () => {
             // Verify email was sent with correct parameters
             expect(mockSendMail).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    to: 'john@buildingbb.com.au',
-                    cc: 'alex@buildingbb.com.au',
+                    to: process.env.ADMIN_EMAIL || 'john@buildingbb.com.au',
+                    cc: process.env.QUOTE_MANAGER_EMAIL || 'alex@buildingbb.com.au',
                     replyTo: 'john@example.com',
                     subject: '📞 Callback Request from John (0412345678)',
                     html: expect.stringContaining('New Callback Request'),

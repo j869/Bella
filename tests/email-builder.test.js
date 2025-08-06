@@ -23,7 +23,7 @@ describe('Email Message Building Tests', () => {
             buildingEnvelope: 'no',
             easements: 'yes',
             overEasement: 'no',
-            emailMessage: 'Planning to build a 6x4m shed for garden storage'
+            additionalInfo: 'Planning to build a 6x4m shed for garden storage'
         };
 
         const result = buildEstimateEmailMessage(formData);
@@ -130,10 +130,10 @@ describe('Email Message Building Tests', () => {
         expect(result).toContain('Storage items: None specified');
     });
 
-    test('should handle empty emailMessage field', () => {
+    test('should handle empty additionalInfo field', () => {
         const formData = {
             emailTo: 'test@example.com',
-            emailMessage: ''
+            additionalInfo: ''
         };
 
         const result = buildEstimateEmailMessage(formData);
@@ -141,10 +141,10 @@ describe('Email Message Building Tests', () => {
         expect(result).not.toContain('ADDITIONAL INFORMATION:');
     });
 
-    test('should handle whitespace-only emailMessage field', () => {
+    test('should handle whitespace-only additionalInfo field', () => {
         const formData = {
             emailTo: 'test@example.com',
-            emailMessage: '   \n   \t   '
+            additionalInfo: '   \n   \t   '
         };
 
         const result = buildEstimateEmailMessage(formData);
@@ -152,10 +152,10 @@ describe('Email Message Building Tests', () => {
         expect(result).not.toContain('ADDITIONAL INFORMATION:');
     });
 
-    test('should preserve emailMessage formatting', () => {
+    test('should preserve additionalInfo formatting', () => {
         const formData = {
             emailTo: 'test@example.com',
-            emailMessage: 'Line 1\nLine 2\n\nLine 4 with spacing'
+            additionalInfo: 'Line 1\nLine 2\n\nLine 4 with spacing'
         };
 
         const result = buildEstimateEmailMessage(formData);
