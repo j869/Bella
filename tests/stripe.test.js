@@ -23,7 +23,7 @@ jest.mock('pg', () => ({
       if (query.includes('customer_purchases')) {
         const mockCustomerData = {
           id: 1,
-          reference_number: 'BPE-TEST-12345',
+          reference_number: 'BPA-TEST-12345',
           customer_email: 'test@example.com',
           customer_name: 'Test Customer',
           customer_phone: '0412345678',
@@ -123,7 +123,7 @@ describe('Stripe Payment Integration', () => {
       payment_status: 'paid',
       customer_details: { email: 'test@example.com' },
       metadata: {
-        referenceNumber: 'BPE-TEST-12345',
+        referenceNumber: 'BPA-TEST-12345',
         customerEmail: 'test@example.com',
         customerName: 'Test Customer',
         customerPhone: '0412345678'
@@ -166,7 +166,7 @@ describe('Stripe Payment Integration', () => {
         customerEmail: 'test@example.com',
         customerName: 'Test Customer',
         customerPhone: '0412345678',
-        referenceNumber: 'BPE-TEST-12345',
+        referenceNumber: 'BPA-TEST-12345',
         hasFullFormData: true
       };
 
@@ -203,14 +203,14 @@ describe('Stripe Payment Integration', () => {
       // Verify metadata contains fallback values
       const stripeConfig = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
       expect(stripeConfig.metadata.customerEmail).toBe('test@example.com'); // From mocked DB
-      expect(stripeConfig.metadata.referenceNumber).toBe('BPE-TEST-12345'); // From mocked DB
+      expect(stripeConfig.metadata.referenceNumber).toBe('BPA-TEST-12345'); // From mocked DB
     });
 
     it('should handle missing customer email gracefully', async () => {
       const formData = {
         customerName: 'Test Customer',
         customerPhone: '0412345678',
-        referenceNumber: 'BPE-TEST-12345'
+        referenceNumber: 'BPA-TEST-12345'
         // Missing customerEmail
       };
 
@@ -235,7 +235,7 @@ describe('Stripe Payment Integration', () => {
         customerEmail: 'test@example.com',
         customerName: 'Test Customer',
         customerPhone: '0412345678',
-        referenceNumber: 'BPE-TEST-12345'
+        referenceNumber: 'BPA-TEST-12345'
       };
 
       const response = await request(app)
@@ -260,7 +260,7 @@ describe('Stripe Payment Integration', () => {
       expect(mockStripeInstance.checkout.sessions.retrieve).toHaveBeenCalledWith(sessionId);
       
       // Verify thank you page is rendered with reference number
-      expect(response.text).toContain('BPE-TEST-12345');
+      expect(response.text).toContain('BPA-TEST-12345');
     });
 
     it('should handle successful payment without session ID', async () => {
@@ -429,7 +429,7 @@ describe('Stripe Payment Integration', () => {
             customerEmail: formData.customerEmail,
             customerName: formData.customerName,
             customerPhone: formData.phone,
-            referenceNumber: 'BPE-INTEGRATION-TEST',
+            referenceNumber: 'BPA-INTEGRATION-TEST',
             hasFullFormData: true
           })
           .expect(303);
@@ -494,7 +494,7 @@ describe('Stripe Payment Integration', () => {
         .expect(200);
 
       // Should still render thank you page despite database error
-      expect(response.text).toContain('BPE-TEST-12345');
+      expect(response.text).toContain('BPA-TEST-12345');
     });
   });
 });

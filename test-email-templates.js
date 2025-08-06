@@ -34,7 +34,7 @@ const mockData = {
     firstName: 'John',
     
     // Reference and tracking
-    referenceNumber: 'BPE-TEST-' + Date.now(),
+    referenceNumber: 'BPA-TEST-' + Date.now(),
     
     // Form submission data
     foundation: 'concrete footings',
@@ -67,7 +67,7 @@ const mockData = {
             customerName: 'John Test Customer',
             customerEmail: 'customer.test@example.com',
             customerPhone: '0412345678',
-            referenceNumber: 'BPE-TEST-' + Date.now(),
+            referenceNumber: 'BPA-TEST-' + Date.now(),
             hasFullFormData: 'true'
         }
     },

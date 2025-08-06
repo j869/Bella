@@ -567,7 +567,7 @@ function buildEstimateEmailMessage(formData) {
     // Add footer with estimate service information
     const feeAmount = ((process.env.ESTIMATE_FEE || 5500) / 100).toFixed(2);
     message += '---\n';
-    message += 'This estimate request was submitted via the building permit website.\n';
+    message += 'This estimate request was submitted via the Victorian Permit Applications website.\n';
     message += `Please note: This is a $${feeAmount} estimate service to provide you with a preliminary cost assessment.\n`;
     message += `This estimate is not a final quote. The $${feeAmount} will be credited back if you proceed with our services.\n`;
     message += `Submitted: ${new Date().toLocaleString('en-AU')}\n`;

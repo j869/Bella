@@ -16,7 +16,7 @@ describe('Email Template Integration Tests', () => {
         customerEmail: 'jest.test@example.com',
         phone: '0412345678',
         firstName: 'Jest',
-        referenceNumber: 'BPE-JEST-' + Date.now(),
+        referenceNumber: 'BPA-JEST-' + Date.now(),
         foundation: 'concrete footings',
         location: 'test location',
         additionalInfo: 'Jest test additional information',
@@ -69,7 +69,7 @@ describe('Email Template Integration Tests', () => {
             
             expect(template).toHaveProperty('html');
             expect(template).toHaveProperty('text');
-            expect(template.html).toContain('NEW ESTIMATE FORM SUBMISSION');
+            expect(template.html).toContain('NEW ESTIMATE SUBMISSION');
             expect(template.text).toContain(mockData.referenceNumber);
         });
 

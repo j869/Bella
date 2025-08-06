@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS public.customer_purchases
 (
     id SERIAL PRIMARY KEY,
     -- Reference and Payment Information
-    reference_number VARCHAR(50) UNIQUE,           -- e.g., BPE-12345678-ABCD
+    reference_number VARCHAR(50) UNIQUE,           -- e.g., BPA-4123
     stripe_payment_intent_id VARCHAR(255),                  -- Stripe PaymentIntent ID
     stripe_checkout_session_id VARCHAR(255),                -- Stripe Checkout Session ID
     stripe_customer_id VARCHAR(255),                        -- Stripe Customer ID (if created)
@@ -91,7 +91,7 @@ CREATE INDEX IF NOT EXISTS idx_customer_purchases_reference ON customer_purchase
 create index if not exists idx_customer_purchases_ip ON customer_purchases(customer_ip);
 -- comments
 COMMENT ON TABLE customer_purchases IS 'Complete customer purchase tracking from first visit to payment completion';
-COMMENT ON COLUMN customer_purchases.reference_number IS 'Unique reference number generated for each estimate request (e.g., BPE-12345678-ABCD)';
+COMMENT ON COLUMN customer_purchases.reference_number IS 'Unique reference number generated for each estimate request (e.g., BPA-4123)';
 COMMENT ON COLUMN customer_purchases.stripe_payment_intent_id IS 'Stripe PaymentIntent ID for tracking payment in Stripe dashboard';
 COMMENT ON COLUMN customer_purchases.stripe_checkout_session_id IS 'Stripe Checkout Session ID for linking to Stripe session data';
 COMMENT ON COLUMN customer_purchases.stripe_customer_id IS 'Stripe Customer ID if a customer record was created in Stripe';

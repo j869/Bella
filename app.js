@@ -61,6 +61,38 @@ if (process.env.NODE_ENV !== 'test') {
 const app = express();
 
 /**
+ * Reference number generation counter
+ * Starting at 4000 as requested
+ */
+let referenceCounter = 4000;
+
+/**
+ * Generates a unique reference number in the format BPA-XXXX
+ * 
+ * This function is designed to be easily modified in the future to:
+ * - Read the next available sequence from an API on a foreign server
+ * - Maintain consistency across distributed systems
+ * - Handle failover scenarios
+ * 
+ * @param {string} environment - Environment type ('test', 'production', etc.)
+ * @returns {string} Formatted reference number (e.g., 'BPA-4123')
+ */
+function generateReferenceNumber(environment = 'production') {
+    if (environment === 'test') {
+        // For testing environments, use a predictable format
+        return 'BPA-TEST-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+    }
+    
+    // TODO: In future implementation, this could call an external API:
+    // const nextNumber = await fetchNextReferenceFromAPI();
+    // return `BPA-${nextNumber.toString().padStart(4, '0')}`;
+    
+    // Current implementation: increment local counter
+    const currentNumber = referenceCounter++;
+    return `BPA-${currentNumber.toString().padStart(4, '0')}`;
+}
+
+/**
  * Generic email sending function
  * Configures transporter and sends email with provided parameters
  * 
@@ -394,7 +426,7 @@ app.post('/submit-estimate-request', upload.fields([
     // Check if this is a test environment (for unit tests)
     if (process.env.NODE_ENV === 'test') {
         // For testing, render the thank you page with a test reference
-        const testReferenceNumber = 'BPE-TEST-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+        const testReferenceNumber = generateReferenceNumber('test');
         return res.render('thank-you', { referenceNumber: testReferenceNumber });
     }
     
@@ -407,7 +439,7 @@ app.post('/submit-estimate-request', upload.fields([
     }
     
     // Generate a unique reference number for this estimate request
-    const referenceNumber = 'BPE-' + Date.now().toString().slice(-8) + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+    const referenceNumber = generateReferenceNumber();
     
     // Store the processed data back in req.body for the redirect
     req.body.referenceNumber = referenceNumber;
@@ -1232,7 +1264,7 @@ function buildEstimateEmailMessage(formData) {
     // Add footer with estimate service information
     const feeAmount = ((process.env.ESTIMATE_FEE || 5500) / 100).toFixed(2);
     message += '---\n';
-    message += 'This estimate request was submitted via the building permit website.\n';
+    message += 'This estimate request was submitted via the Victorian Permit Applications website.\n';
     message += `Please note: This is a $${feeAmount} estimate service to provide you with a preliminary cost assessment.\n`;
     message += `This estimate is not a final quote. The $${feeAmount} will be credited back if you proceed with our services.\n`;
     message += `Submitted: ${new Date().toLocaleString('en-AU')}\n`;

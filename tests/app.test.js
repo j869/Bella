@@ -182,7 +182,7 @@ describe('Contact Page Application', () => {
         .field('phone', emailData.phone)
         .expect(200);
 
-      expect(response.text).toContain('BPE-'); // Check for reference number format
+      expect(response.text).toContain('BPA-'); // Check for reference number format
     });
 
     it('should handle multiple file uploads with email', async () => {
