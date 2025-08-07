@@ -59,14 +59,14 @@ This document outlines a **completely FREE** address verification system using O
 
 ## Implementation Strategy: Progressive Enhancement
 
-### Step 1: Immediate Client-Side Validation (Day 1)
-Implement regex-based validation for instant feedback while user types.
+### Step 1: create a test form test-address.ejs as proof of concept
+Does not implement regex, api calls only, no back end integration
 
-### Step 2: Add OpenStreetMap Integration (Week 1)
+### Step 2: add functionality in  main.ejs and test - database integration, still no regex
 Enhance with real address validation using Nominatim API.
 
-### Step 3: Smart Fallback Logic (Week 2)
-Create intelligent switching between API and regex based on availability.
+### Step 3: Smart Fallback Logic (include regex)
+Create intelligent switching between to regex cases if API returns no results
 
 ---
 
