@@ -25,8 +25,7 @@ function getNotifyPermitEstimateProceedTemplate(data) {
     const detailedMessage = buildEstimateEmailMessage(data);
     
     return {
-        to: 'buildingpermits@bpcsolutions.com.au',
-        cc: 'admin@bpcsolutions.com.au',
+        to: process.env.PERMIT_INBOX || 'permits@vicpa.com.au',
         subject: `NEW ESTIMATE REQUEST: ${data.customerName || 'Unknown Customer'}`,
         text: detailedMessage
     };
@@ -101,7 +100,7 @@ This email was system generated - ce1`;    return { html, text };
  * @returns {Object} Email template with html and text versions
  */
 function sysAdminNewCustomerAlertTemplate(data) {
-    const { formData, referenceNumber, clientIp } = data;
+    const { formData, processedFormData, referenceNumber, clientIp } = data;
     const timestamp = new Date().toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' });
     
     let html = `
@@ -141,53 +140,49 @@ function sysAdminNewCustomerAlertTemplate(data) {
             <p><strong>Status:</strong> <span class="status">Awaiting Payment</span></p>
         </div>`;
 
-    if (formData.customerName || formData.customerEmail || formData.phone) {
+    // Dynamic form data rendering - contact information
+    const contactFields = processedFormData.filter(item => 
+        ['Customer Name', 'Email Address', 'Phone Number', 'Street Address'].includes(item.question)
+    );
+    
+    if (contactFields.length > 0) {
         html += `
         <div class="contact-box">
             <h3 class="section-title">👤 Customer Contact</h3>`;
-        if (formData.customerName) {
-            html += `<div class="answer-highlight">Name: ${formData.customerName}</div>`;
-        }
-        if (formData.customerEmail) {
-            html += `<div class="answer-highlight">Email: <a href="mailto:${formData.customerEmail}" style="color: #667eea; text-decoration: none;">${formData.customerEmail}</a></div>`;
-        }
-        if (formData.phone) {
-            html += `<div class="answer-highlight">Phone: <a href="tel:${formData.phone}" style="color: #667eea; text-decoration: none;">${formData.phone}</a></div>`;
-        }
+        contactFields.forEach(item => {
+            if (item.question === 'Email Address') {
+                html += `<div class="answer-highlight">${item.question}: <a href="mailto:${item.answer}" style="color: #667eea; text-decoration: none;">${item.answer}</a></div>`;
+            } else if (item.question === 'Phone Number') {
+                html += `<div class="answer-highlight">${item.question}: <a href="tel:${item.answer}" style="color: #667eea; text-decoration: none;">${item.answer}</a></div>`;
+            } else {
+                html += `<div class="answer-highlight">${item.question}: ${item.answer}</div>`;
+            }
+        });
         html += `</div>`;
     }
 
-    html += `
+    // Dynamic form data rendering - project details
+    const projectFields = processedFormData.filter(item => 
+        !['Customer Name', 'Email Address', 'Phone Number', 'Street Address'].includes(item.question)
+    );
+    
+    if (projectFields.length > 0) {
+        html += `
         <div class="project-box">
             <h3 class="section-title">🏗️ Project Summary</h3>`;
-    
-    if (formData.location) {
-        html += `<div class="answer-highlight">Location: ${formData.location}</div>`;
-    }
-    if (formData.foundation) {
-        html += `<div class="answer-highlight">Foundation Type: ${formData.foundation}</div>`;
-    }
-    if (formData.purpose) {
-        html += `<div class="answer-highlight">Primary Purpose: ${formData.purpose}</div>`;
-    }
-    
-    // Storage items
-    if (formData['storageItems[]']) {
-        const storageItems = Array.isArray(formData['storageItems[]']) 
-            ? formData['storageItems[]'] 
-            : [formData['storageItems[]']];
-        if (storageItems.length > 0) {
-            html += `<div class="answer-highlight">Storage Items: ${storageItems.join(', ')}</div>`;
-        }
-    }
-    
-    // Customer notes
-    if (formData.additionalInfo && formData.additionalInfo.trim()) {
-        html += `<div class="answer-highlight">Customer Notes:</div><div class="notes-section">${formData.additionalInfo.trim()}</div>`;
-    }
-    
-    html += `</div>
         
+        projectFields.forEach(item => {
+            if (item.question === 'Additional Information') {
+                html += `<div class="answer-highlight">${item.question}:</div><div class="notes-section">${item.answer}</div>`;
+            } else {
+                html += `<div class="answer-highlight">${item.question}: ${item.answer}</div>`;
+            }
+        });
+        
+        html += `</div>`;
+    }
+    
+    html += `
         <div class="action-box">
             <h3 class="section-title">⚡ Next Steps</h3>
             <div class="answer-highlight">Customer will be redirected to payment portal</div>
@@ -201,12 +196,12 @@ function sysAdminNewCustomerAlertTemplate(data) {
             This is an automated system notification.<br>
             Full form data is stored in the database for detailed review after payment.
         </p>
-        <p style="text-align: center; color: #999; font-size: 11px; margin-top: 10px;">This email was system generated - ce2</p>
+        <p style="text-align: center; color: #999; font-size: 11px; margin-top: 10px;">This email was system generated - ce5</p>
     </div>
 </body>
 </html>`;
 
-    // Build text version
+    // Build text version - Dynamic raw format
     let text = "✨ NEW ESTIMATE FORM SUBMISSION\n\n";
     
     text += "SUBMISSION DETAILS:\n";
@@ -215,43 +210,11 @@ function sysAdminNewCustomerAlertTemplate(data) {
     text += `Client IP: ${clientIp || 'Unknown'}\n`;
     text += `Status: Awaiting Payment\n\n`;
     
-    if (formData.customerName || formData.customerEmail || formData.phone) {
-        text += "CUSTOMER CONTACT:\n";
-        if (formData.customerName) {
-            text += `Name: ${formData.customerName}\n`;
-        }
-        if (formData.customerEmail) {
-            text += `Email: ${formData.customerEmail}\n`;
-        }
-        if (formData.phone) {
-            text += `Phone: ${formData.phone}\n`;
-        }
-        text += "\n";
-    }
-    
-    text += "PROJECT SUMMARY:\n";
-    if (formData.location) {
-        text += `Location: ${formData.location}\n`;
-    }
-    if (formData.foundation) {
-        text += `Foundation Type: ${formData.foundation}\n`;
-    }
-    if (formData.purpose) {
-        text += `Primary Purpose: ${formData.purpose}\n`;
-    }
-    
-    if (formData['storageItems[]']) {
-        const storageItems = Array.isArray(formData['storageItems[]']) 
-            ? formData['storageItems[]'] 
-            : [formData['storageItems[]']];
-        if (storageItems.length > 0) {
-            text += `Storage Items: ${storageItems.join(', ')}\n`;
-        }
-    }
-    
-    if (formData.additionalInfo && formData.additionalInfo.trim()) {
-        text += `\nCustomer Notes: ${formData.additionalInfo.trim()}\n`;
-    }
+    // Dynamic raw format rendering
+    text += "FORM DATA (Raw Format):\n";
+    processedFormData.forEach(item => {
+        text += `- ${item.question}: ${item.answer}\n`;
+    });
     
     text += "\n⚡ NEXT STEPS:\n";
     text += "• Customer will be redirected to payment portal\n";
@@ -262,12 +225,12 @@ function sysAdminNewCustomerAlertTemplate(data) {
     text += "---\n";
     text += "This is an automated system notification.\n";
     text += "Full form data is stored in the database for detailed review after payment.\n";
-    text += "This email was system generated - ce2";
+    text += "This email was system generated - ce5";
 
     return { 
         html, 
         text,
-        to: process.env.ADMIN_EMAIL || 'admin@bpcsolutions.com.au',
+        to: process.env.ADMIN_EMAIL || 'john@buildingbb.com.au',
         subject: `✨ NEW ESTIMATE SUBMISSION - ${referenceNumber}`
     };
 }
@@ -351,7 +314,7 @@ function getCustomerThankyouEmailTemplate(data) {
         <div class="contact-box">
             <h3 style="color: #28a745; margin-top: 0;">📞 Need Help? Contact Our Team</h3>
             <div class="contact-info">
-                <p><strong>Email:</strong> ${process.env.QUOTE_MANAGER_EMAIL || 'alex@buildingbb.com.au'}</p>
+                <p><strong>Email:</strong> ${process.env.PERMIT_INBOX || 'permits@vicpa.com.au'}</p>
                 <p><strong>Phone:</strong> 0429 815 177</p>
                 <p><strong>Business Hours:</strong> Monday - Friday, 9:00 AM - 5:00 PM AEST</p>
             </div>
@@ -400,7 +363,7 @@ WHAT HAPPENS NEXT?
 • Direct Contact: Personal consultation if needed
 
 CONTACT OUR TEAM:
-Email: ${process.env.QUOTE_MANAGER_EMAIL || 'alex@buildingbb.com.au'}
+Email: ${process.env.PERMIT_INBOX || 'permits@vicpa.com.au'}
 Phone: 0429 815 177
 Business Hours: Monday - Friday, 9:00 AM - 5:00 PM AEST
 
@@ -631,7 +594,7 @@ function getFailedPurchaseEmailTemplate(data) {
         </div>
 
         <div style="text-align: center; margin: 30px 0;">
-            <a href="mailto:${process.env.QUOTE_MANAGER_EMAIL || 'alex@buildingbb.com.au'}?subject=Complete%20My%20Estimate%20-%20${referenceNumber}" class="cta-button">
+            <a href="mailto:${process.env.PERMIT_INBOX || 'permits@vicpa.com.au'}?subject=Complete%20My%20Estimate%20-%20${referenceNumber}" class="cta-button">
                 Complete My Estimate Now
             </a>
         </div>
@@ -661,7 +624,7 @@ function getFailedPurchaseEmailTemplate(data) {
         <div style="text-align: center; margin: 30px 0;">
             <p style="margin-bottom: 20px;"><strong>Still have questions? We're here to help!</strong></p>
             <p>
-                📧 Email: <a href="mailto:${process.env.QUOTE_MANAGER_EMAIL || 'alex@buildingbb.com.au'}">${process.env.QUOTE_MANAGER_EMAIL || 'alex@buildingbb.com.au'}</a><br>
+                📧 Email: <a href="mailto:${process.env.PERMIT_INBOX || 'permits@vicpa.com.au'}">${process.env.PERMIT_INBOX || 'permits@vicpa.com.au'}</a><br>
                 📱 Phone: <a href="tel:0429815177">0429 815 177</a><br>
                 🕒 Business Hours: Monday - Friday, 9:00 AM - 5:00 PM AEST
             </p>
@@ -705,7 +668,7 @@ WHY CHOOSE OUR ESTIMATE SERVICE?
 ✅ Direct access to permit specialists
 
 CONTACT US:
-Email: ${process.env.QUOTE_MANAGER_EMAIL || 'alex@buildingbb.com.au'}
+Email: ${process.env.PERMIT_INBOX || 'permits@vicpa.com.au'}
 Phone: 0429 815 177
 Hours: Monday - Friday, 9:00 AM - 5:00 PM AEST
 
@@ -717,7 +680,11 @@ Making building permits simple and stress-free
 This email was system generated - ce4
 `;
 
-    return { html, text };
+    return { 
+        subject: `Complete Your Building Permit Estimate - ${referenceNumber}`,
+        html, 
+        text 
+    };
 }
 
 module.exports = {

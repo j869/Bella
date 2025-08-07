@@ -86,6 +86,7 @@ async function sendTestEmail(templateName, emailData, description) {
         
         const result = await transporter.sendMail({
             ...emailData,
+            from: process.env.SMTP_EMAIL,
             to: process.env.ADMIN_EMAIL,
             subject: `[EMAIL TEST] ${emailData.subject || templateName}`
         });
@@ -110,20 +111,55 @@ async function sendAllEmailExamples() {
     let totalCount = 0;
     
     try {
-        // 1. Usage Logging Notification to admin Template
+        // 1. Admin Notification (ce2) - Form Submission Alert
+        totalCount++;
+        const adminAlert = emailTemplates.sysAdminNewCustomerAlertTemplate({
+            formData: mockData,
+            referenceNumber: mockData.referenceNumber,
+            clientIp: mockData.clientIp
+        });
+        
+        if (await sendTestEmail(
+            'Admin Notification (ce2)',
+            {
+                subject: `🚨 New Estimate Request [Ref: ${mockData.referenceNumber}] - ${mockData.customerName}`,
+                html: adminAlert.html,
+                text: adminAlert.text
+            },
+            'Admin-only notification sent when customer submits estimate form (before payment)'
+        )) successCount++;
+        
+        // 2. Customer Thank You (ce3) - Payment Success Receipt
+        totalCount++;
+        const customerThanks = emailTemplates.getCustomerThankyouEmailTemplate({
+            referenceNumber: mockData.referenceNumber,
+            session: mockData.session
+        });
+        
+        if (await sendTestEmail(
+            'Customer Thank You (ce3)',
+            {
+                subject: `Your confirmation receipt - Victorian Permit Applications [Ref: ${mockData.referenceNumber}]`,
+                html: customerThanks.html,
+                text: customerThanks.text
+            },
+            'Receipt email sent to customer after successful payment completion'
+        )) successCount++;
+        
+        // 3. Permit Specialists Notification (ce5) - Business Processing
         totalCount++;
         const businessNotification = emailTemplates.getNotifyPermitEstimateProceedTemplate(mockData);
         
         if (await sendTestEmail(
-            'Usage Logging Notification to admin Template',
+            'Permit Specialists Notification (ce5)',
             {
                 subject: businessNotification.subject,
                 text: businessNotification.text
             },
-            'Usage logging notification sent to IT admin with complete form data'
+            'Business notification sent to permit specialists after successful payment with customer files attached'
         )) successCount++;
         
-        // 2. Callback Request Template
+        // 4. Callback Request (ce1) - Customer Support
         totalCount++;
         const callbackRequest = emailTemplates.getCallbackRequestTemplate({
             firstName: mockData.firstName,
@@ -135,51 +171,16 @@ async function sendAllEmailExamples() {
         });
         
         if (await sendTestEmail(
-            'Callback Request',
+            'Callback Request (ce1)',
             {
-                subject: `Callback Request from ${mockData.firstName}`,
+                subject: `📞 Callback Request from ${mockData.firstName} (${mockData.phone})`,
                 html: callbackRequest.html,
                 text: callbackRequest.text
             },
-            'Email sent when customer requests a callback'
+            'Support request email sent when customer requests a callback'
         )) successCount++;
         
-        // 3. Job Information to Permit Specialists
-        totalCount++;
-        const adminAlert = emailTemplates.sysAdminNewCustomerAlertTemplate({
-            formData: mockData,
-            referenceNumber: mockData.referenceNumber,
-            clientIp: mockData.clientIp
-        });
-        
-        if (await sendTestEmail(
-            'Job Information to Permit Specialists',
-            {
-                subject: `✨ NEW ESTIMATE SUBMISSION - ${mockData.referenceNumber}`,
-                html: adminAlert.html,
-                text: adminAlert.text
-            },
-            'Job information notification sent to permit specialists when new estimate form is submitted'
-        )) successCount++;
-        
-        // 4. Customer Thank You Email
-        totalCount++;
-        const customerThanks = emailTemplates.getCustomerThankyouEmailTemplate({
-            referenceNumber: mockData.referenceNumber,
-            session: mockData.session
-        });
-        
-        if (await sendTestEmail(
-            'Customer Thank You',
-            {
-                subject: `Thank You - Victorian Permit Applications [${mockData.referenceNumber}]`,
-                html: customerThanks.html,
-                text: customerThanks.text
-            },
-            'Primary success email sent to customer after payment completion'
-        )) successCount++;
-        
-        // 5. Failed Purchase Email
+        // 5. Failed Purchase Recovery (ce4) - Session Expired
         totalCount++;
         const failedPurchase = emailTemplates.getFailedPurchaseEmailTemplate({
             referenceNumber: mockData.referenceNumber,
@@ -188,13 +189,13 @@ async function sendAllEmailExamples() {
         });
         
         if (await sendTestEmail(
-            'Failed Purchase Recovery',
+            'Failed Purchase Recovery (ce4)',
             {
-                subject: `Complete Your Building Permit Estimate - ${mockData.referenceNumber}`,
+                subject: failedPurchase.subject,
                 html: failedPurchase.html,
                 text: failedPurchase.text
             },
-            'Recovery email sent when customer starts but doesn\'t complete payment'
+            'Recovery email sent when customer\'s checkout session expires (Stripe webhook)'
         )) successCount++;
         
         // 6. Standalone buildEstimateEmailMessage function test

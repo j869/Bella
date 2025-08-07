@@ -16,6 +16,7 @@ TWILIO_ACCESS_TOKEN=your_twilio_auth_token
 SMTP_EMAIL=your_smtp_email@domain.com
 SMTP_PASSWORD=your_smtp_password
 QUOTE_MANAGER_EMAIL=manager@yourdomain.com
+PERMIT_INBOX=new_permit_jobs_inbox@yourdomain.com.au
 
 # Stripe Configuration
 STRIPE_SECRET_KEY=your_stripe_secret_key

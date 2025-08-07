@@ -67,16 +67,16 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6">
-                    <h1 class="display-4 fw-bold mb-4">Get Your Building Permit Cost Estimate in 24 Hours</h1>
-                    <p class="lead mb-4">Know exactly what approvals you need and what it will cost! Our Bendigo-based experts provide detailed permit estimates for Victorian properties.</p>
+                    <h1 class="display-4 fw-bold mb-4">Get Your Building Permit Cost Estimate Fast</h1>
+                    <p class="lead mb-4">Know exactly what approvals you need and what it will cost! Our Victorian-based experts provide detailed permit estimates across all Victorian properties, bringing 38 years of collective experience in our team.</p>
                     
                     <div class="trust-indicator">
-                        <i class="fas fa-shield-alt"></i> <strong>5 Years Experience</strong> - Commercial & residential permits across Victoria
+                        <i class="fas fa-shield-alt"></i> <strong>38 Years Collective Experience in Our Team</strong> - Commercial & residential permits across Victoria
                     </div>
                     
                     <div class="d-flex align-items-center mb-4">
-                        <span class="price-highlight me-3">Just $<%- ((process.env.ESTIMATE_FEE || 5500) / 100).toFixed(2) %></span>
-                        <span>Permit estimate</span>
+                        <span class="price-highlight me-3">Detailed Estimate</span>
+                        <span>Professional assessment</span>
                     </div>
                     
                     <a href="#estimate-form" class="btn btn-warning btn-lg me-3">
@@ -104,12 +104,12 @@
                 <div class="col-md-4 text-center mb-4">
                     <i class="fas fa-dollar-sign benefit-icon"></i>
                     <h4>Accurate Cost Planning</h4>
-                    <p>Get an indicative cost for your regulatory obligations before you start - no surprises later.</p>
+                    <p>Get an indicative cost for your regulatory obligations before you start – avoid unexpected costs later in your build.</p>
                 </div>
                 <div class="col-md-4 text-center mb-4">
                     <i class="fas fa-handshake benefit-icon"></i>
                     <h4>Your Choice, Your Way</h4>
-                    <p>Use our estimate to DIY your permits, or proceed with us. If you choose us, we'll credit the $<%- ((process.env.ESTIMATE_FEE || 5500) / 100).toFixed(2) %> back.</p>
+                    <p>Use our estimate to DIY your permits, or proceed with us. If you choose us, we'll credit your estimate back.</p>
                 </div>
             </div>
             
@@ -117,8 +117,8 @@
                 <div class="col-md-6 offset-md-3">
                     <div class="card bg-light border-success">
                         <div class="card-body text-center">
-                            <h5 class="card-title text-success">5 Years Experience</h5>
-                            <p class="card-text">Based in Bendigo, we're familiar with regulations across Victoria. We've helped hundreds of customers with commercial and residential permits.</p>
+                            <h5 class="card-title text-success">38 Years Collective Experience</h5>
+                            <p class="card-text">Victorian-based team familiar with regulations across all councils. We've helped hundreds of customers with commercial and residential permits.</p>
                         </div>
                     </div>
                 </div>
@@ -134,7 +134,7 @@
                     <div class="form-section">
                         <div class="text-center mb-4">
                             <h2>Get Your Building Permit Estimate</h2>
-                            <p class="text-muted">Complete this form and we'll provide you with a detailed cost estimate within 24 hours</p>
+                            <p class="text-muted">Complete this form and we'll provide you with a detailed cost estimate within 48 hours</p>
                             <div class="alert alert-info">
                                 <strong>What you'll receive:</strong> Detailed breakdown of required approvals, indicative costs, and expert recommendations for your specific property and project.
                             </div>
@@ -162,6 +162,10 @@
                                     <label for="phone" class="form-label">Phone Number *</label>
                                     <input type="tel" id="phone" name="phone" class="form-control" required>
                                 </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="streetAddress" class="form-label">Street Address *</label>
+                                    <input type="text" id="streetAddress" name="streetAddress" class="form-control" required placeholder="e.g., 123 Smith Street, Bendigo">
+                                </div>
                             </div>
 
                             <!-- Step 2: Construction Details -->
@@ -176,15 +180,15 @@
                                     <label class="form-label">Will your building be constructed on: *</label>
                                     <div class="mt-2">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="foundation" id="footings" value="concrete footings" required>
+                                            <input class="form-check-input" type="radio" name="foundation" id="footings" value="concrete pier footings" required>
                                             <label class="form-check-label" for="footings">
-                                                <strong>Concrete footings</strong> (as per Building Code of Australia Section B1.3)
+                                                <strong>Concrete pier footings</strong>
                                             </label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="radio" name="foundation" id="slab" value="concrete slab" required>
                                             <label class="form-check-label" for="slab">
-                                                <strong>Concrete slab</strong> (as per Building Code of Australia Section B1.4)
+                                                <strong>Concrete slab</strong>
                                             </label>
                                         </div>
                                     </div>
@@ -200,12 +204,22 @@
                                     </div>
                                 </div>
                                 <div class="col-12 mb-3">
-                                    <label for="location" class="form-label">Describe the proposed shed location on your property *</label>
+                                    <label for="location" class="form-label">Standing on the street facing your house, describe the proposed shed location on your property *</label>
                                     <textarea id="location" name="location" class="form-control" rows="3" placeholder="e.g., Rear left corner of property, 20m from house" required></textarea>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="boundaryOffsets" class="form-label">Boundary setbacks (if known)</label>
-                                    <input type="text" id="boundaryOffsets" name="boundaryOffsets" class="form-control" placeholder="e.g., 2m from side fence, 5m from rear">
+                                    <label for="boundarySetbacks" class="form-label">Boundary distance from your fence or boundary (if known)</label>
+                                    <input type="text" id="boundarySetbacks" name="boundarySetbacks" class="form-control" placeholder="e.g., 2m from side fence / boundary, 5m from rear fence / boundary">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="structureLength" class="form-label">Structure Length *</label>
+                                    <input type="text" id="structureLength" name="structureLength" class="form-control" required placeholder="e.g., 12m">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="structureWidth" class="form-label">Structure Width *</label>
+                                    <input type="text" id="structureWidth" name="structureWidth" class="form-control" required placeholder="e.g., 8m">
                                 </div>
                             </div>
 
@@ -230,7 +244,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+                                 
                                 <div id="adjacentQuestions" style="display: none;" class="col-12">
                                     <div class="border p-3 rounded bg-warning bg-opacity-10">
                                         <div class="mb-3">
@@ -247,7 +261,7 @@
                                             </div>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Has any dwelling been built with appropriate permits?</label>
+                                            <label class="form-label">Do you want to build any dwelling with appropriate permits?</label>
                                             <div class="mt-2">
                                                 <div class="form-check">
                                                     <input class="form-check-input" type="radio" name="dwellingPermitted" id="permittedYes" value="yes">
@@ -275,21 +289,49 @@
                                     <label class="form-label">Primary purpose of the shed: *</label>
                                     <div class="mt-2">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="purpose" id="farming" value="farming" required>
+                                            <input class="form-check-input" type="radio" name="purpose" id="farming" value="farming" required onclick="showPurposeQuestions('farming')">
                                             <label class="form-check-label" for="farming">Farming activities</label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="purpose" id="domestic" value="domestic" required>
-                                            <label class="form-check-label" for="domestic">Domestic storage</label>
+                                            <input class="form-check-input" type="radio" name="purpose" id="domestic" value="domestic" required onclick="showPurposeQuestions('domestic')">
+                                            <label class="form-check-label" for="domestic">Domestic use</label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="purpose" id="commercial" value="commercial" required>
+                                            <input class="form-check-input" type="radio" name="purpose" id="commercial" value="commercial" required onclick="showPurposeQuestions('commercial')">
                                             <label class="form-check-label" for="commercial">Commercial use</label>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-12 mb-3">
-                                    <label for="storageItems" class="form-label">What will you store? (Select all that apply)</label>
+                                
+                                <!-- Farming specific questions -->
+                                <div id="farmingQuestions" style="display: none;" class="col-12 mb-3">
+                                    <label for="farmingItems" class="form-label">What will you store? (Select all that apply)</label>
+                                    <div class="mt-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="storageItems[]" id="hay" value="hay">
+                                            <label class="form-check-label" for="hay">Hay and feed</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="storageItems[]" id="machinery" value="machinery">
+                                            <label class="form-check-label" for="machinery">Farm machinery and equipment</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="storageItems[]" id="livestock" value="livestock">
+                                            <label class="form-check-label" for="livestock">Livestock shelter</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="storageItems[]" id="farmingOther" value="other">
+                                            <label class="form-check-label" for="farmingOther">Other</label>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <input type="text" name="farmingOtherText" class="form-control" placeholder="Please specify other farming use...">
+                                    </div>
+                                </div>
+                                
+                                <!-- Domestic specific questions -->
+                                <div id="domesticQuestions" style="display: none;" class="col-12 mb-3">
+                                    <label for="domesticItems" class="form-label">What will you store? (Select all that apply)</label>
                                     <div class="mt-2">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" name="storageItems[]" id="vehicles" value="vehicles">
@@ -303,6 +345,28 @@
                                             <input class="form-check-input" type="checkbox" name="storageItems[]" id="general" value="general">
                                             <label class="form-check-label" for="general">General household items</label>
                                         </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="storageItems[]" id="domesticOther" value="other">
+                                            <label class="form-check-label" for="domesticOther">Other</label>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <input type="text" name="domesticOtherText" class="form-control" placeholder="Please specify other domestic use...">
+                                    </div>
+                                </div>
+                                
+                                <!-- Commercial specific questions -->
+                                <div id="commercialQuestions" style="display: none;" class="col-12 mb-3">
+                                    <label class="form-label">Is this inside a commercial zone?</label>
+                                    <div class="mt-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="commercialZone" id="commercialZoneYes" value="yes">
+                                            <label class="form-check-label" for="commercialZoneYes">Yes, inside commercial zone</label>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <label for="commercialOtherText" class="form-label">Additional information about commercial use:</label>
+                                        <textarea name="commercialOtherText" id="commercialOtherText" class="form-control" rows="3" placeholder="Please describe the commercial use and any other relevant details..."></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -336,7 +400,7 @@
                                 <div id="envelopeQuestions" style="display: none;" class="col-12">
                                     <div class="border p-3 rounded bg-info bg-opacity-10">
                                         <div class="mb-3">
-                                            <label class="form-label">Will the building be constructed inside the building envelope?</label>
+                                            <label class="form-label">Do you want to build inside the building envelope?</label>
                                             <div class="mt-2">
                                                 <div class="form-check">
                                                     <input class="form-check-input" type="radio" name="insideEnvelope" id="insideYes" value="yes">
@@ -372,7 +436,7 @@
                                 <div id="easementQuestions" style="display: none;" class="col-12">
                                     <div class="border p-3 rounded bg-warning bg-opacity-10">
                                         <div class="mb-3">
-                                            <label class="form-label">Will the building be constructed over an easement?</label>
+                                            <label class="form-label">Do you want to build over an easement?</label>
                                             <div class="mt-2">
                                                 <div class="form-check">
                                                     <input class="form-check-input" type="radio" name="overEasement" id="overYes" value="yes">
@@ -399,7 +463,7 @@
                                 
                                 <!-- Section 32 Document -->
                                 <div class="col-12 mb-4">
-                                    <label for="section32" class="form-label">Section 32 Statement (Optional but Recommended)</label>
+                                    <label for="section32" class="form-label">Can you provide us with a copy of the Section 32 statement or a plan of title?</label>
                                     <input type="file" id="section32" name="section32" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
                                     <div class="form-text">
                                         <strong>What is this?</strong> A Section 32 is a vendor statement that shows property details including overlays, covenants, and restrictions.
@@ -409,7 +473,7 @@
 
                                 <!-- Property Title/Plan -->
                                 <div class="col-12 mb-4">
-                                    <label for="propertyTitle" class="form-label">Title Certificate or Property Plan (Optional but Recommended)</label>
+                                    <label for="propertyTitle" class="form-label">Can you provide us with a title certificate?</label>
                                     <input type="file" id="propertyTitle" name="propertyTitle" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
                                     <div class="form-text">
                                         <strong>What is this?</strong> Your property title certificate or survey plan showing boundaries and easements.
@@ -451,8 +515,8 @@
                                 <button type="submit" class="btn btn-success btn-lg px-5">
                                     <i class="fas fa-calculator"></i> Get My Estimate
                                 </button>
-                                <p class="mt-2 text-muted">You'll receive your detailed estimate within 24 hours</p>
-                                <p class="small text-success"><strong>Proceed with us?</strong> We'll credit the $<%- ((process.env.ESTIMATE_FEE || 5500) / 100).toFixed(2) %> back to your final bill</p>
+                                <p class="mt-2 text-muted">You'll receive your detailed estimate within 48 hours</p>
+                                <p class="small text-success"><strong>Proceed with us?</strong> We'll credit your estimate back to your final bill</p>
                             </div>
                         </form>
                     </div>
@@ -652,6 +716,22 @@
 
         function showEasementQuestions(show) {
             document.getElementById('easementQuestions').style.display = show ? 'block' : 'none';
+        }
+
+        function showPurposeQuestions(purpose) {
+            // Hide all purpose-specific sections
+            document.getElementById('farmingQuestions').style.display = 'none';
+            document.getElementById('domesticQuestions').style.display = 'none';
+            document.getElementById('commercialQuestions').style.display = 'none';
+            
+            // Show the selected purpose section
+            if (purpose === 'farming') {
+                document.getElementById('farmingQuestions').style.display = 'block';
+            } else if (purpose === 'domestic') {
+                document.getElementById('domesticQuestions').style.display = 'block';
+            } else if (purpose === 'commercial') {
+                document.getElementById('commercialQuestions').style.display = 'block';
+            }
         }
 
         function showPhoneForm() {

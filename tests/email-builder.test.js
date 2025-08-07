@@ -57,7 +57,7 @@ describe('Email Message Building Tests', () => {
         expect(result).toContain('ADDITIONAL INFORMATION:');
         expect(result).toContain('Planning to build a 6x4m shed');
         
-        expect(result).toContain('This estimate request was submitted via the building permit website');
+        expect(result).toContain('This estimate request was submitted via the Victorian Permit Applications website');
         const expectedFee = ((parseInt(process.env.ESTIMATE_FEE) || 5500) / 100).toFixed(2);
         expect(result).toContain(`$${expectedFee} estimate service`);
     });
@@ -171,7 +171,7 @@ describe('Email Message Building Tests', () => {
         const result = buildEstimateEmailMessage(formData);
 
         expect(result).toContain('---');
-        expect(result).toContain('submitted via the building permit website');
+        expect(result).toContain('submitted via the Victorian Permit Applications website');
         const expectedFee = ((parseInt(process.env.ESTIMATE_FEE) || 5500) / 100).toFixed(2);
         expect(result).toContain(`$${expectedFee} estimate service`);
         expect(result).toContain('not a final quote');

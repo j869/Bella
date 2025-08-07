@@ -181,25 +181,25 @@
 
                 <div class="contact-info">
                     <h5 class="mb-3"><i class="fas fa-phone me-2"></i>Your Direct Contacts</h5>
-                    <div class="contact-item">
-                        <i class="fas fa-envelope"></i>
-                        <div class="ms-3">
-                            <strong>Alex</strong><br>
-                            <a href="mailto:alex@buildingbb.com.au">alex@buildingbb.com.au</a>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-envelope"></i>
-                        <div class="ms-3">
-                            <strong>Amanda</strong><br>
-                            <a href="mailto:amandah@vicpa.com.au">amandah@vicpa.com.au</a>
-                        </div>
-                    </div>
+                    <% if (agents && agents.length > 0) { %>
+                        <% agents.forEach(function(agent) { %>
+                            <div class="contact-item">
+                                <i class="fas fa-envelope"></i>
+                                <div class="ms-3">
+                                    <strong><%= agent.name %></strong> - <%= agent.role %><br>
+                                    <a href="mailto:<%= agent.email %>"><%= agent.email %></a><br>
+                                    <% if (agent.mobile) { %>
+                                        <a href="tel:<%= agent.mobile %>"><%= agent.mobile %></a>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } %>
                     <div class="contact-item">
                         <i class="fas fa-phone"></i>
                         <div class="ms-3">
                             <strong>Office</strong><br>
-                            <a href="tel:0429815177">0429 815 177</a>
+                            <a href="tel:<%= officePhone %>"><%= officePhone %></a>
                         </div>
                     </div>
                 </div>

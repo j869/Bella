@@ -47,7 +47,7 @@ describe('Email Functionality Tests', () => {
         process.env.NODE_ENV = 'test';
         process.env.SMTP_EMAIL = 'test@example.com';
         process.env.SMTP_PASSWORD = 'testpassword';
-        process.env.QUOTE_MANAGER_EMAIL = 'manager@example.com';
+        process.env.PERMIT_INBOX = 'unit_testing@vicpa.com.au';
     });
 
     afterEach(() => {
@@ -90,7 +90,7 @@ describe('Email Functionality Tests', () => {
             expect(mockSendMail).toHaveBeenCalledWith(
                 expect.objectContaining({
                     to: process.env.ADMIN_EMAIL || 'john@buildingbb.com.au',
-                    cc: process.env.QUOTE_MANAGER_EMAIL || 'alex@buildingbb.com.au',
+                    cc: process.env.PERMIT_INBOX || 'permits@vicpa.com.au',
                     replyTo: 'john@example.com',
                     subject: '📞 Callback Request from John (0412345678)',
                     html: expect.stringContaining('New Callback Request'),

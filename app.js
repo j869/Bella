@@ -33,6 +33,69 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const emailTemplates = require('./email-templates');
 
 /**
+ * Form field mapping for dynamic processing
+ * Maps form field names to human-readable labels for email templates
+ */
+const formFieldMapping = {
+    customerName: 'Customer Name',
+    customerEmail: 'Email Address', 
+    phone: 'Phone Number',
+    streetAddress: 'Street Address',
+    foundation: 'Foundation Type',
+    location: 'Shed Location Description',
+    boundarySetbacks: 'Boundary Distance',
+    structureLength: 'Structure Length',
+    structureWidth: 'Structure Width',
+    dwellingOnProperty: 'Dwelling on Property',
+    adjacentDwelling: 'Adjacent Dwelling',
+    dwellingPermitted: 'Dwelling Permitted',
+    purpose: 'Primary Purpose',
+    'storageItems[]': 'Storage Items',
+    farmingOtherText: 'Other Farming Use',
+    domesticOtherText: 'Other Domestic Use', 
+    commercialOtherText: 'Commercial Use Details',
+    commercialZone: 'Commercial Zone',
+    buildingEnvelope: 'Building Envelope Restriction',
+    insideEnvelope: 'Inside Building Envelope',
+    easements: 'Easements on Property',
+    overEasement: 'Building Over Easement',
+    additionalInfo: 'Additional Information'
+};
+
+/**
+ * Dynamic form data processor
+ * Converts form data into structured question-answer pairs for email templates
+ * @param {Object} reqBody - Express request body containing form data
+ * @returns {Array} Array of objects with question, answer, and fieldName properties
+ */
+function processFormData(reqBody) {
+    const processedData = [];
+    
+    for (const [fieldName, fieldValue] of Object.entries(reqBody)) {
+        if (fieldValue && fieldName in formFieldMapping) {
+            const label = formFieldMapping[fieldName];
+            
+            // Handle different field types
+            let displayValue = fieldValue;
+            if (Array.isArray(fieldValue)) {
+                displayValue = fieldValue.join(', ');
+            }
+            
+            // Skip empty values
+            if (displayValue && displayValue.toString().trim()) {
+                processedData.push({
+                    question: label,
+                    answer: displayValue,
+                    fieldName: fieldName
+                });
+            }
+        }
+    }
+    
+    return processedData;
+}
+
+/**
  * Twilio client configuration
  * Used for sending SMS messages
  */
@@ -60,11 +123,7 @@ if (process.env.NODE_ENV !== 'test') {
 }
 const app = express();
 
-/**
- * Reference number generation counter
- * Starting at 4000 as requested
- */
-let referenceCounter = 4000;
+
 
 /**
  * Generates a unique reference number in the format BPA-XXXX
@@ -77,7 +136,7 @@ let referenceCounter = 4000;
  * @param {string} environment - Environment type ('test', 'production', etc.)
  * @returns {string} Formatted reference number (e.g., 'BPA-4123')
  */
-function generateReferenceNumber(environment = 'production') {
+async function generateReferenceNumber(environment = 'production') {
     if (environment === 'test') {
         // For testing environments, use a predictable format
         return 'BPA-TEST-' + Math.random().toString(36).substr(2, 4).toUpperCase();
@@ -87,12 +146,109 @@ function generateReferenceNumber(environment = 'production') {
     // const nextNumber = await fetchNextReferenceFromAPI();
     // return `BPA-${nextNumber.toString().padStart(4, '0')}`;
     
-    // Current implementation: increment local counter
-    const currentNumber = referenceCounter++;
-    return `BPA-${currentNumber.toString().padStart(4, '0')}`;
+    try {
+        // Use database sequence to get next BPA reference number
+        const result = await pool.query('SELECT get_next_bpa_reference() as reference_number');
+        
+        if (result.rows && result.rows.length > 0) {
+            return result.rows[0].reference_number;
+        } else {
+            throw new Error('No reference number returned from database');
+        }
+    } catch (error) {
+        console.error('Error generating reference number from database:', error);
+        
+        // Fallback: generate a timestamp-based reference number
+        const timestamp = Date.now().toString().slice(-8);
+        const fallbackRef = `BPA-FB-${timestamp}`;
+        console.log(`Using fallback reference number: ${fallbackRef}`);
+        return fallbackRef;
+    }
 }
 
 /**
+ * Clean up orphaned files in the uploads directory
+ * Removes files that are older than the specified age and not referenced in active database records
+ * 
+ * @param {number} maxAgeHours - Maximum age in hours for files to be kept (default: 48)
+ * @returns {Object} Cleanup statistics
+ */
+async function cleanupOrphanedFiles(maxAgeHours = 48) {
+    const cleanupStats = {
+        totalFilesScanned: 0,
+        filesDeleted: 0,
+        filesSkipped: 0,
+        errors: []
+    };
+    
+    try {
+        const uploadsDir = path.join(__dirname, 'uploads');
+        if (!fs.existsSync(uploadsDir)) {
+            console.log('Uploads directory does not exist, skipping cleanup');
+            return cleanupStats;
+        }
+        
+        const files = fs.readdirSync(uploadsDir);
+        cleanupStats.totalFilesScanned = files.length;
+        
+        // Get list of files currently referenced in database
+        const activeFilesQuery = `
+            SELECT form_data 
+            FROM customer_purchases 
+            WHERE form_data IS NOT NULL 
+            AND form_data::text LIKE '%"hasFileAttachment":true%'
+            AND created_at > NOW() - INTERVAL '7 days'
+        `;
+        
+        const activeFilesResult = await pool.query(activeFilesQuery);
+        const referencedFiles = new Set();
+        
+        // Extract file paths from database records
+        activeFilesResult.rows.forEach(row => {
+            if (row.form_data && row.form_data.files) {
+                ['section32', 'propertyTitle', 'attachment'].forEach(fileType => {
+                    if (row.form_data.files[fileType] && row.form_data.files[fileType].path) {
+                        referencedFiles.add(path.basename(row.form_data.files[fileType].path));
+                    }
+                });
+            }
+        });
+        
+        console.log(`Found ${referencedFiles.size} files referenced in active database records`);
+        
+        for (const filename of files) {
+            const filePath = path.join(uploadsDir, filename);
+            
+            try {
+                const stats = fs.statSync(filePath);
+                const fileAgeHours = (Date.now() - stats.mtime.getTime()) / (1000 * 60 * 60);
+                
+                // Skip files that are too new or are referenced in database
+                if (fileAgeHours < maxAgeHours || referencedFiles.has(filename)) {
+                    cleanupStats.filesSkipped++;
+                    continue;
+                }
+                
+                // Delete old orphaned file
+                fs.unlinkSync(filePath);
+                cleanupStats.filesDeleted++;
+                console.log(`Cleaned up orphaned file: ${filename} (${fileAgeHours.toFixed(1)} hours old)`);
+                
+            } catch (fileError) {
+                cleanupStats.errors.push(`Error processing ${filename}: ${fileError.message}`);
+                console.error(`Error processing file ${filename}:`, fileError);
+            }
+        }
+        
+        console.log(`File cleanup completed: ${cleanupStats.filesDeleted} deleted, ${cleanupStats.filesSkipped} skipped, ${cleanupStats.errors.length} errors`);
+        
+    } catch (error) {
+        cleanupStats.errors.push(`Cleanup process error: ${error.message}`);
+        console.error('Error during file cleanup:', error);
+    }
+    
+    return cleanupStats;
+}/**
  * Generic email sending function
  * Configures transporter and sends email with provided parameters
  * 
@@ -134,6 +290,27 @@ async function sendEmail(emailOptions) {
         if (emailOptions.bcc) mailConfig.bcc = emailOptions.bcc;
         if (emailOptions.replyTo) mailConfig.replyTo = emailOptions.replyTo;
         if (emailOptions.html) mailConfig.html = emailOptions.html;
+        if (emailOptions.attachments && emailOptions.attachments.length > 0) {
+            mailConfig.attachments = emailOptions.attachments;
+            console.log(`dd1a    Adding ${emailOptions.attachments.length} attachment(s) to email`);
+        }
+
+        // Auto-add admin BCC if enabled (unless the admin is already the recipient)
+        if (process.env.ADMIN_BCC_ALL_EMAILS === 'true' && process.env.ADMIN_EMAIL) {
+            const adminEmail = process.env.ADMIN_EMAIL;
+            // Don't BCC admin if they're already the recipient or in TO/CC
+            const recipients = [emailOptions.to, emailOptions.cc].join(',').toLowerCase();
+            if (!recipients.includes(adminEmail.toLowerCase())) {
+                if (mailConfig.bcc) {
+                    // If BCC already exists, append admin email
+                    mailConfig.bcc += ',' + adminEmail;
+                } else {
+                    // If no BCC exists, set admin as BCC
+                    mailConfig.bcc = adminEmail;
+                }
+                console.log(`dd2     Auto-added admin BCC: ${adminEmail}`);
+            }
+        }
 
         // Send the email
         const info = await transporter.sendMail(mailConfig);
@@ -209,7 +386,7 @@ This is an automated notification from the Contact Page application.
 
         // Send the notification email using the generic email function
         const result = await sendEmail({
-            to: process.env.QUOTE_MANAGER_EMAIL,
+            to: process.env.PERMIT_INBOX,
             subject: emailSubject,
             text: emailBody,
         });
@@ -230,7 +407,7 @@ This is an automated notification from the Contact Page application.
             emailSubject,
             new Date(),
             'system',
-            process.env.QUOTE_MANAGER_EMAIL
+            process.env.PERMIT_INBOX
         ];
         
         await pool.query(query, values);
@@ -288,16 +465,10 @@ app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res)
     case 'payment_intent.succeeded':
         const paymentIntent = event.data.object;
         console.log('dh59     PaymentIntent succeeded:', paymentIntent.id);
-        
-        // Send email notification to quote manager
-        await sendPurchaseNotificationEmail(paymentIntent);
         break;
     case 'charge.succeeded':
         const charge2 = event.data.object;
         console.log('dh6      Charge succeeded:', charge2.id);
-        
-        // Send email notification to quote manager
-        await sendPurchaseNotificationEmail(charge2);
         break;
     case 'payment_intent.created':
         console.log('dh7      PaymentIntent created:', event.data.object.id);
@@ -305,6 +476,33 @@ app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res)
     case 'charge.failed':
         const charge3 = event.data.object;
         console.log('dh58    Charge failed:', charge3.id);
+        break;
+    case 'checkout.session.expired':
+        const expiredSession = event.data.object;
+        console.log('dh60     Checkout session expired:', expiredSession.id);
+        
+        // Send ce4 Failed Purchase Recovery email
+        try {
+            if (expiredSession.metadata && expiredSession.metadata.customerEmail && expiredSession.metadata.customerName) {
+                const failedPurchaseTemplate = emailTemplates.getFailedPurchaseEmailTemplate({
+                    referenceNumber: expiredSession.metadata.referenceNumber || 'N/A',
+                    customerEmail: expiredSession.metadata.customerEmail,
+                    customerName: expiredSession.metadata.customerName
+                });
+                
+                await sendEmail({
+                    to: expiredSession.metadata.customerEmail,
+                    bcc: process.env.ADMIN_BCC_ALL_EMAILS === "true" ? process.env.ADMIN_EMAIL : undefined,
+                    subject: failedPurchaseTemplate.subject || `Complete Your Building Permit Estimate`,
+                    html: failedPurchaseTemplate.html,
+                    text: failedPurchaseTemplate.text
+                });
+                
+                console.log('dh61     Failed purchase recovery email sent to:', expiredSession.metadata.customerEmail);
+            }
+        } catch (failedEmailError) {
+            console.error('dh62     Error sending failed purchase recovery email:', failedEmailError);
+        }
         break;
     default:
         console.log(`dh588      Unhandled event type: ${event.type}`);
@@ -380,6 +578,43 @@ app.get('/get-location', async (req, res) => {
 });
 
 /**
+ * Manual file cleanup route (admin only)
+ * Triggers cleanup of orphaned files in uploads directory
+ * 
+ * @route GET /admin/cleanup-files
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Object} JSON object with cleanup statistics
+ */
+app.get('/admin/cleanup-files', async (req, res) => {
+    try {
+        // Simple admin check - in production you'd use proper authentication
+        const authHeader = req.headers.authorization;
+        if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_CLEANUP_TOKEN}`) {
+            return res.status(401).json({ error: 'Unauthorized. Admin token required.' });
+        }
+        
+        const maxAgeHours = parseInt(req.query.maxAge) || 48;
+        const cleanupStats = await cleanupOrphanedFiles(maxAgeHours);
+        
+        res.json({
+            success: true,
+            message: 'File cleanup completed',
+            statistics: cleanupStats,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('Manual cleanup error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Cleanup failed', 
+            details: error.message 
+        });
+    }
+});
+
+/**
  * Main page route
  * Renders the contact page with message history from database
  * 
@@ -426,20 +661,54 @@ app.post('/submit-estimate-request', upload.fields([
     // Check if this is a test environment (for unit tests)
     if (process.env.NODE_ENV === 'test') {
         // For testing, render the thank you page with a test reference
-        const testReferenceNumber = generateReferenceNumber('test');
-        return res.render('thank-you', { referenceNumber: testReferenceNumber });
+        const testReferenceNumber = await generateReferenceNumber('test');
+        const agents = JSON.parse(process.env.AGENTS || '[]');
+        const officePhone = process.env.OFFICE_PHONE || '0429815177';
+        return res.render('thank-you', { 
+            referenceNumber: testReferenceNumber,
+            agents: agents,
+            officePhone: officePhone
+        });
     }
     
     // Extract and validate required fields
     const { customerEmail, phone, customerName } = req.body;
-    let newNotes = `em1     creating new customer ${customerEmail}\n`;
+    let newNotes = `[${new Date().toISOString()}] FORM SUBMISSION STARTED\n`;
+    newNotes += `Customer Email: ${customerEmail || 'NOT PROVIDED'}\n`;
+    newNotes += `Customer Name: ${customerName || 'NOT PROVIDED'}\n`;
+    newNotes += `Customer Phone: ${phone || 'NOT PROVIDED'}\n`;
+    newNotes += `Session ID: ${req.sessionID}\n`;
+    newNotes += `Client IP: ${req.clientIp}\n`;
+    newNotes += `User Agent: ${req.headers['user-agent'] || 'unknown'}\n`;
 
     if (!customerEmail || !phone || !customerName) {
+        newNotes += `ERROR: Missing required fields - Email: ${!!customerEmail}, Phone: ${!!phone}, Name: ${!!customerName}\n`;
         return res.status(400).send('Missing required fields. Please provide your name, email address, and phone number.');
     }
     
+    // Track file attachments
+    if (req.files && Object.keys(req.files).length > 0) {
+        newNotes += `File attachments received: ${Object.keys(req.files).join(', ')}\n`;
+        Object.keys(req.files).forEach(fileType => {
+            if (req.files[fileType] && req.files[fileType][0]) {
+                newNotes += `  - ${fileType}: ${req.files[fileType][0].originalname} (${(req.files[fileType][0].size / 1024).toFixed(1)}KB)\n`;
+            }
+        });
+    } else {
+        newNotes += `No file attachments provided\n`;
+    }
+
     // Generate a unique reference number for this estimate request
-    const referenceNumber = generateReferenceNumber();
+    let referenceNumber;
+    try {
+        referenceNumber = await generateReferenceNumber();
+        newNotes += `Reference number generated: ${referenceNumber}\n`;
+    } catch (refError) {
+        newNotes += `ERROR: Failed to generate reference number: ${refError.message}\n`;
+        // Still try to continue with a fallback
+        referenceNumber = `BPA-ERROR-${Date.now().toString().slice(-8)}`;
+        newNotes += `Using emergency fallback reference: ${referenceNumber}\n`;
+    }
     
     // Store the processed data back in req.body for the redirect
     req.body.referenceNumber = referenceNumber;
@@ -448,35 +717,47 @@ app.post('/submit-estimate-request', upload.fields([
     req.body.customerPhone = phone;
     req.body.hasFullFormData = true; // Flag to indicate complete form submission
 
-    // Send sysadmin headsup email asynchronously
+    // Process form data dynamically for email templates
+    const processedFormData = processFormData(req.body);
+    newNotes += `Processed ${processedFormData.length} form fields dynamically\n`;
+
+    // Send sysadmin heads-up email asynchronously
     try {
-        const adminAlertTemplate = emailTemplates.sysAdminNewCustomerAlert({
+        const adminAlertTemplate = emailTemplates.sysAdminNewCustomerAlertTemplate({
             formData: req.body,
+            processedFormData: processedFormData,
             referenceNumber,
             clientIp: req.clientIp
         });
         
+        newNotes += `Email template generated successfully for admin notification\n`;
+        
         sendEmail({
             to: process.env.ADMIN_EMAIL || "john@buildingbb.com.au",
-            cc: process.env.QUOTE_MANAGER_EMAIL || "alex@buildingbb.com.au", 
-            subject: `🚨 New Estimate Request [Ref: ${referenceNumber}] - ${customerName}`,
+            subject: `New Estimate Request [Ref: ${referenceNumber}] - ${customerName}`,
             html: adminAlertTemplate.html,
             text: adminAlertTemplate.text,
-        }).then(() => {
+        }).then((emailResult) => {
             console.log('em15   Admin notification email sent for new estimate submission');
+            
         }).catch(emailError => {
             console.error('em16   Error sending admin notification email:', emailError);
+            
         });
         
+        newNotes += `Admin notification email queued for sending\n`;
         console.log("em3     sent sysAdmin headsup email")
     } catch (templateError) {
         console.error('em16   Error generating admin notification template:', templateError);
+        newNotes += `ERROR: Failed to generate admin email template: ${templateError.message}\n`;
     }
 
 
     //#region create initial customer record
         // Create new record with available information from form submission
-        newNotes = newNotes + `em13   Initial form submission recorded at ${new Date().toISOString()}\n`;
+        newNotes += `DATABASE RECORD CREATION:\n`;
+        newNotes += `Attempting to create customer_purchases record at ${new Date().toISOString()}\n`;
+        
         const insertQuery = `
             INSERT INTO customer_purchases (
                 web_session_id,
@@ -492,14 +773,29 @@ app.post('/submit-estimate-request', upload.fields([
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         `;
         
-        // Prepare form data as JSON for storage
+        // Prepare form data as JSON for storage including actual file paths
         const formDataJson = {
             originalFormSubmission: req.body,
             hasFileAttachment: req.files && Object.keys(req.files).length > 0,
             files: req.files ? {
-                section32: req.files.section32 ? req.files.section32[0].originalname : null,
-                propertyTitle: req.files.propertyTitle ? req.files.propertyTitle[0].originalname : null,
-                attachment: req.files.attachment ? req.files.attachment[0].originalname : null
+                section32: req.files.section32 ? {
+                    filename: req.files.section32[0].originalname,
+                    path: req.files.section32[0].path,
+                    size: req.files.section32[0].size,
+                    mimetype: req.files.section32[0].mimetype
+                } : null,
+                propertyTitle: req.files.propertyTitle ? {
+                    filename: req.files.propertyTitle[0].originalname,
+                    path: req.files.propertyTitle[0].path,
+                    size: req.files.propertyTitle[0].size,
+                    mimetype: req.files.propertyTitle[0].mimetype
+                } : null,
+                attachment: req.files.attachment ? {
+                    filename: req.files.attachment[0].originalname,
+                    path: req.files.attachment[0].path,
+                    size: req.files.attachment[0].size,
+                    mimetype: req.files.attachment[0].mimetype
+                } : null
             } : null
         };
         
@@ -519,13 +815,19 @@ app.post('/submit-estimate-request', upload.fields([
         try {
             await pool.query(insertQuery, insertValues);
             console.log('em13   Initial customer purchase record created for form submission');
+            newNotes += `SUCCESS: Customer record created in database\n`;
 
         } catch (insertError) {
             console.error('em14   Error creating initial customer purchase record:', insertError);
+            newNotes += `ERROR: Failed to create customer record: ${insertError.message}\n`;
+            newNotes += `Error details: ${insertError.code || 'unknown error code'}\n`;
         }
     
     //#endregion
 
+    newNotes += `FORM SUBMISSION COMPLETED:\n`;
+    newNotes += `Redirecting to payment portal at ${new Date().toISOString()}\n`;
+    newNotes += `Redirect URL: /create-checkout-session?customerEmail=${encodeURIComponent(customerEmail)}\n`;
 
     // Redirect to create checkout session with the form data
     const redirectUrl = `/create-checkout-session?customerEmail=${encodeURIComponent(customerEmail)}`;
@@ -609,7 +911,7 @@ Submitted: ${currentDate.toLocaleString('en-AU')}`;
         
         const emailResult = await sendEmail({
             to: process.env.ADMIN_EMAIL || "john@buildingbb.com.au",
-            cc: process.env.QUOTE_MANAGER_EMAIL || "alex@buildingbb.com.au",
+            cc: process.env.ADMIN_BCC_ALL_EMAILS === "true" ? process.env.PERMIT_INBOX : undefined,
             replyTo: email,
             subject: `📞 Callback Request from ${firstName} (${phone})`,
             html: emailTemplate.html,
@@ -648,29 +950,35 @@ app.get("/success", async (req, res) => {
         console.log('ps11         ...body:', req.body || {});
 
         const sessionId = req.query.session_id;
-        let newNotes = ``
-        newNotes = newNotes + `ps1    [${new Date().toISOString()}] Payment completed successfully via Stripe. \n`;
+        let newNotes = `[${new Date().toISOString()}] PAYMENT SUCCESS PROCESSING\n`;
+        newNotes += `Session ID: ${sessionId || 'NOT PROVIDED'}\n`;
+        newNotes += `Client IP: ${req.clientIp}\n`;
         
         if (!sessionId) {
             console.log("ps1    Payment successful but no session ID provided");
-            newNotes = newNotes + `ps1      !Lost sessionID - initiate manual reconciliation\n`;
+            newNotes += `ERROR: Missing session ID - manual reconciliation required\n`;
             return res.send("Payment successful! Thank you for your purchase.");
         } else {
             console.log("ps11     working with session ID:", sessionId);
+            newNotes += `Processing with session ID: ${sessionId}\n`;
         }
 
         // Retrieve the checkout session to get metadata
         const session = await stripe.checkout.sessions.retrieve(sessionId);
         console.log("ps2    session metadata:", session.metadata);
+        newNotes += `Stripe session retrieved successfully\n`;
+        newNotes += `Session metadata: ${JSON.stringify(session.metadata)}\n`;
 
         // Extract customer email from session (either from metadata or customer_email)
         const customerEmail = session.metadata?.customerEmail || session.customer_details?.email || session.customer_email || null;
         
         if (!customerEmail) {
-            newNotes = newNotes + `ps3      !lost customer contact\n`;
+            newNotes += `ERROR: No customer email found in session data\n`;
             console.log("ps3    Payment successful but no customer email found");
             const feeAmount = ((process.env.ESTIMATE_FEE || 5500) / 100).toFixed(2);
             return res.send(`Payment successful! Thank you for your $${feeAmount} purchase. Please contact us at alex@buildingbb.com.au with your transaction ID: ${session.payment_intent} to process your estimate request.`);
+        } else {
+            newNotes += `Customer email identified: ${customerEmail}\n`;
         }
 
         // Extract estimate request data from metadata (if not available use dummy data)
@@ -686,17 +994,22 @@ app.get("/success", async (req, res) => {
         // Send thank you email to customer with payment confirmation
         const customerTemplateData = { referenceNumber, session };
         const customerEmailTemplate = emailTemplates.getCustomerThankyouEmailTemplate(customerTemplateData);
+        newNotes += `EMAIL OPERATIONS:\n`;
 
-        await sendEmail({
-            to: customerEmail,
-            bcc: process.env.ADMIN_EMAIL || "john@buildingbb.com.au",
-            subject: `Your confirmation receipt - Victorian Permit Applications [Ref: ${referenceNumber}]`,
-            html: customerEmailTemplate.html,
-            text: customerEmailTemplate.text
-        });
-        newNotes = newNotes + `ps1    Customer confirmation email sent to ${customerEmail}. \n`;
+        try {
+            await sendEmail({
+                to: customerEmail,
+                bcc: process.env.ADMIN_EMAIL || "john@buildingbb.com.au",
+                subject: `Your confirmation receipt - Victorian Permit Applications [Ref: ${referenceNumber}]`,
+                html: customerEmailTemplate.html,
+                text: customerEmailTemplate.text
+            });
+            newNotes += `SUCCESS: Customer confirmation email sent to ${customerEmail}\n`;
+        } catch (emailError) {
+            newNotes += `ERROR: Failed to send customer confirmation email: ${emailError.message}\n`;
+        }
 
-        // Send notification email to business team with payment proof
+        // Send notification email to business team with payment proof and file attachments
         // Extract customer data from session metadata for detailed business notification
         const customerData = {
             customerName,
@@ -708,17 +1021,101 @@ app.get("/success", async (req, res) => {
         
         const businessEmailTemplate = emailTemplates.getNotifyPermitEstimateProceedTemplate(customerData);
 
-        await sendEmail({
-            to: businessEmailTemplate.to,
-            cc: businessEmailTemplate.cc,
-            replyTo: customerEmail,
-            subject: businessEmailTemplate.subject,
-            text: businessEmailTemplate.text
-        });
-        newNotes = newNotes + `ps2    Business notification emails sent to ${process.env.QUOTE_MANAGER_EMAIL || "john@buildingbb.com.au"}. \n`;
+        // Retrieve and prepare file attachments from database
+        let emailAttachments = [];
+        let attachmentPaths = [];
+        
+        try {
+            // Query database for file information related to this customer
+            const fileQuery = `
+                SELECT form_data 
+                FROM customer_purchases 
+                WHERE reference_number = $1 OR customer_email = $2
+                ORDER BY created_at DESC
+                LIMIT 1
+            `;
+            
+            const fileResult = await pool.query(fileQuery, [referenceNumber, customerEmail]);
+            newNotes += `Database file lookup for attachments\n`;
+            
+            if (fileResult.rows.length > 0 && fileResult.rows[0].form_data) {
+                const formData = fileResult.rows[0].form_data;
+                newNotes += `Form data found in database for attachments\n`;
+                
+                // Check if files were uploaded with the original form submission
+                if (formData.hasFileAttachment && formData.files) {
+                    const fileTypes = ['section32', 'propertyTitle', 'attachment'];
+                    
+                    for (const fileType of fileTypes) {
+                        if (formData.files[fileType] && formData.files[fileType].path) {
+                            const fileInfo = formData.files[fileType];
+                            const filePath = path.resolve(__dirname, fileInfo.path);
+                            
+                            // Check if the file still exists
+                            if (fs.existsSync(filePath)) {
+                                emailAttachments.push({
+                                    filename: fileInfo.filename,
+                                    path: filePath,
+                                    contentType: fileInfo.mimetype || 'application/octet-stream'
+                                });
+                                attachmentPaths.push(filePath);
+                                newNotes += `Attachment prepared: ${fileType} -> ${fileInfo.filename} (${(fileInfo.size / 1024).toFixed(1)}KB)\n`;
+                            } else {
+                                newNotes += `WARNING: File not found: ${fileInfo.filename} at ${filePath}\n`;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (emailAttachments.length > 0) {
+                newNotes += `${emailAttachments.length} file(s) will be attached to business email\n`;
+            } else {
+                newNotes += `No file attachments found for this customer\n`;
+            }
+            
+        } catch (fileError) {
+            newNotes += `ERROR: Failed to retrieve file attachments: ${fileError.message}\n`;
+            console.error('File attachment retrieval error:', fileError);
+        }
+
+        try {
+            await sendEmail({
+                to: businessEmailTemplate.to,
+                bcc: process.env.ADMIN_BCC_ALL_EMAILS === "true" ? process.env.ADMIN_EMAIL : undefined,
+                replyTo: customerEmail,
+                subject: businessEmailTemplate.subject,
+                text: businessEmailTemplate.text,
+                attachments: emailAttachments  // Include actual file attachments
+            });
+            newNotes += `SUCCESS: Business notification email sent with ${emailAttachments.length} attachment(s) to ${process.env.PERMIT_INBOX || "permits@vicpa.com.au"}\n`;
+            
+            // Clean up attachment files after successful email sending
+            if (attachmentPaths.length > 0) {
+                newNotes += `FILE CLEANUP:\n`;
+                for (const filePath of attachmentPaths) {
+                    try {
+                        if (fs.existsSync(filePath)) {
+                            fs.unlinkSync(filePath);
+                            newNotes += `SUCCESS: Deleted attachment file: ${path.basename(filePath)}\n`;
+                            console.log(`File cleaned up: ${filePath}`);
+                        }
+                    } catch (cleanupError) {
+                        newNotes += `ERROR: Failed to delete file ${path.basename(filePath)}: ${cleanupError.message}\n`;
+                        console.error(`Error deleting file ${filePath}:`, cleanupError);
+                    }
+                }
+            }
+            
+        } catch (emailError) {
+            newNotes += `ERROR: Failed to send business notification email: ${emailError.message}\n`;
+            // Don't delete files if email failed - they might be needed for retry
+        }
+
         console.log('ps6    Confirmation emails sent after successful payment');
 
         //#region update customer job details 
+        newNotes += `DATABASE UPDATE OPERATIONS:\n`;
         // Insert/Update customer purchase tracking record - find existing record first
         const findExistingQuery = `
             SELECT id FROM customer_purchases 
@@ -731,14 +1128,16 @@ app.get("/success", async (req, res) => {
             const findResult = await pool.query(findExistingQuery, [referenceNumber, sessionId]);
             existingRecord = findResult.rows[0] || null;
             console.log('ps4a   Existing customer record found:', existingRecord ? 'YES' : 'NO');
+            newNotes += `Database record lookup: ${existingRecord ? 'FOUND existing record' : 'No existing record found'}\n`;
         } catch (findError) {
             console.error('ps4a   Error finding existing customer record:', findError);
-            newNotes = newNotes + `ps4a      !Cannot find customer_purchase record\n`;
+            newNotes += `ERROR: Database lookup failed: ${findError.message}\n`;
         }
 
 
         if (existingRecord) {
             // Update existing record - only add new information
+            newNotes += `Updating existing customer record (ID: ${existingRecord.id})\n`;
             const updateQuery = `
                 UPDATE customer_purchases 
                 SET 
@@ -766,12 +1165,14 @@ app.get("/success", async (req, res) => {
             try {
                 await pool.query(updateQuery, updateValues);
                 console.log('ps4b   Existing customer purchase record updated with payment completion info');
+                newNotes += `SUCCESS: Customer record updated with payment completion\n`;
             } catch (updateError) {
                 console.error('ps5b   Error updating existing customer purchase record:', updateError);
+                newNotes += `ERROR: Failed to update customer record: ${updateError.message}\n`;
             }
         } else {
             // Create new record with available information
-            newNotes = newNotes + `ps4b   adding late recovery customer purchase record\n`;
+            newNotes += `Creating new customer record for late recovery\n`;
             const insertQuery = `
                 INSERT INTO customer_purchases (
                     reference_number,
@@ -813,16 +1214,24 @@ app.get("/success", async (req, res) => {
             try {
                 await pool.query(insertQuery, insertValues);
                 console.log('ps4b   New customer purchase record created');
+                newNotes += `SUCCESS: New customer record created for payment completion\n`;
 
             } catch (insertError) {
                 console.error('ps5b   Error creating new customer purchase record:', insertError);
+                newNotes += `ERROR: Failed to create new customer record: ${insertError.message}\n`;
             }
         }
         //#endregion
 
         
         // Redirect to thank you page with reference number
-        res.render('thank-you', { referenceNumber: referenceNumber });
+        const agents = JSON.parse(process.env.AGENTS || '[]');
+        const officePhone = process.env.OFFICE_PHONE || '0429815177';
+        res.render('thank-you', { 
+            referenceNumber: referenceNumber,
+            agents: agents,
+            officePhone: officePhone
+        });
 
     } catch (error) {
         console.error('ps7    Error processing successful payment:', error);
@@ -844,7 +1253,10 @@ app.get("/cancel", async (req, res) => {
     if ( req.body) {
         console.log('ps1b       body:', req.body);
     }
-    let newNotes = `ps1     Payment cancelled via back button at ${new Date().toISOString()}\n`;
+    let newNotes = `[${new Date().toISOString()}] PAYMENT CANCELLATION\n`;
+    newNotes += `User cancelled payment process\n`;
+    newNotes += `Session ID: ${req.sessionID}\n`;
+    newNotes += `Client IP: ${req.clientIp}\n`;
     
     // Try to find existing customer record using available session information
     const findExistingQuery = `
@@ -861,11 +1273,13 @@ app.get("/cancel", async (req, res) => {
         console.log('ps13   Existing customer record found:', existingRecord ? `YES (${existingRecord.customer_email})` : 'NO');
         
         if (existingRecord) {
-            newNotes += `ps1c   Found customer record: ${existingRecord.customer_email} (${existingRecord.reference_number})\n`;
+            newNotes += `Customer record found: ${existingRecord.customer_email} (${existingRecord.reference_number})\n`;
+        } else {
+            newNotes += `No existing customer record found for session/IP\n`;
         }
     } catch (findError) {
         console.error('ps1c   Error finding existing customer record:', findError);
-        newNotes += `ps1c   Error finding customer record: ${findError.message}\n`;
+        newNotes += `ERROR: Database lookup failed: ${findError.message}\n`;
     }
 
     if (existingRecord) {
@@ -917,16 +1331,20 @@ app.post("/create-checkout-session", async (req, res) => {
         console.log('ps11         ...body:', req.body || {});
         
         // Extract the required data for payment processing
-        console.log('ps2    Body:', req.body);
-        let newNotes = ``;
+        let newNotes = `[${new Date().toISOString()}] CHECKOUT SESSION CREATION\n`;
+        newNotes += `Session ID: ${req.sessionID}\n`;
+        newNotes += `Client IP: ${req.clientIp}\n`;
 
         // Make req.body optional - handle cases where redirect didn't preserve body data
         const requestData = req.body || {};
         let { customerEmail, referenceNumber, customerName, customerPhone, hasFullFormData } = requestData;
+        console.log('ps2    Body:', requestData);
+        newNotes += `Form data received: ${Object.keys(requestData).length} fields\n`;
         
         if (!customerEmail || !referenceNumber || !customerName || !customerPhone) {
             console.log('ps51    No customer data found in request, recreating from database with sessionID and req.query.customeremail');
-            newNotes = newNotes + `ps51      !lost customer data, attempting database recovery\n`;
+            newNotes += `CUSTOMER DATA RECOVERY:\n`;
+            newNotes += `Missing customer data, attempting database recovery\n`;
             
             // Try to get customer email from query params if not in body
             const queryCustomerEmail = req.query.customerEmail;
@@ -966,23 +1384,26 @@ app.post("/create-checkout-session", async (req, res) => {
                         console.log('ps50    Session ID does not match database record:', dbCustomer.web_session_id, ' compared to current req.sessionID: ', req.sessionID);
                     }
                     
-                    newNotes = newNotes + `ps52      Successfully recovered customer data from database: ${dbCustomer.customer_email}\n`;
+                    newNotes += `SUCCESS: Customer data recovered from database: ${dbCustomer.customer_email}\n`;
                 } else {
                     console.log('ps53    No customer found in database, using query parameter if available');
                     customerEmail = customerEmail || queryCustomerEmail || null;
-                    newNotes = newNotes + `ps53      No database match found, using query email: ${queryCustomerEmail || 'none'}\n`;
+                    newNotes += `No database match found, using query email: ${queryCustomerEmail || 'none'}\n`;
                 }
                 
             } catch (dbError) {
                 console.error('ps54    Error querying database for customer info:', dbError);
                 customerEmail = customerEmail || queryCustomerEmail || null;
-                newNotes = newNotes + `ps54      Database error, fallback to query email: ${queryCustomerEmail || 'none'}\n`;
+                newNotes += `ERROR: Database recovery failed: ${dbError.message}\n`;
+                newNotes += `Fallback to query email: ${queryCustomerEmail || 'none'}\n`;
             }
         }
         // Log the final customer data we have after recovery attempt
         console.log('ps55    Final customer data - Email:', customerEmail, 'Ref:', referenceNumber, 'Name:', customerName, 'Phone:', customerPhone);
+        newNotes += `Final customer data - Email: ${customerEmail}, Ref: ${referenceNumber}, Name: ${customerName}, Phone: ${customerPhone}\n`;
         
         // Create Stripe session configuration
+        newNotes += `STRIPE SESSION CREATION:\n`;
         const sessionConfig = {
             line_items: [
             {
@@ -1009,17 +1430,22 @@ app.post("/create-checkout-session", async (req, res) => {
             }
         };
         console.log('ps5    initialising stripe session configuration:', sessionConfig);
-            newNotes = newNotes + `ps9      !lost customer email\n`;
+        newNotes += `Stripe session configured with amount: $${((parseInt(process.env.ESTIMATE_FEE) || 5500) / 100).toFixed(2)}\n`;
 
         // Pre-populate email on Stripe payment form only if customer email is available
         if (customerEmail) {
             sessionConfig.customer_email = customerEmail;
+            newNotes += `Customer email pre-populated in Stripe form\n`;
+        } else {
+            newNotes += `WARNING: No customer email to pre-populate in Stripe form\n`;
         }
         
         const session = await stripe.checkout.sessions.create(sessionConfig);
         console.log('ps91   Checkout session created successfully:', session.id);
+        newNotes += `SUCCESS: Stripe checkout session created: ${session.id}\n`;
 
         //#region update customer job details 
+        newNotes += `DATABASE OPERATIONS:\n`;
         // Insert/Update customer purchase tracking record - find existing record first
         const findExistingQuery = `
             SELECT id FROM customer_purchases 
@@ -1032,14 +1458,16 @@ app.post("/create-checkout-session", async (req, res) => {
             const findResult = await pool.query(findExistingQuery, [referenceNumber, customerEmail]);
             existingRecord = findResult.rows[0] || null;
             console.log('ps4a   Existing customer record found:', existingRecord ? 'YES' : 'NO');
+            newNotes += `Database lookup: ${existingRecord ? 'Found existing record' : 'No existing record'}\n`;
         } catch (findError) {
             console.error('ps4a   Error finding existing customer record:', findError);
-            newNotes = newNotes + `ps4a      !Cannot find customer_purchase record\n`;
+            newNotes += `ERROR: Database lookup failed: ${findError.message}\n`;
         }
 
 
         if (existingRecord) {
             // Update existing record - append new information to existing data
+            newNotes += `Updating existing customer record\n`;
             const updateQuery = `
                 UPDATE customer_purchases 
                 SET 
@@ -1065,12 +1493,14 @@ app.post("/create-checkout-session", async (req, res) => {
             try {
                 await pool.query(updateQuery, updateValues);
                 console.log('ps4b   Existing customer purchase record updated with checkout session info');
+                newNotes += `SUCCESS: Customer record updated with checkout session\n`;
             } catch (updateError) {
                 console.error('ps5b   Error updating existing customer purchase record:', updateError);
+                newNotes += `ERROR: Failed to update customer record: ${updateError.message}\n`;
             }
         } else {
             // Create new record with available information to assist in recreating missing record
-            newNotes = newNotes + `ps4b   Creating new customer purchase record for checkout session\n`;
+            newNotes += `Creating new customer record for checkout session\n`;
             const insertQuery = `
                 INSERT INTO customer_purchases (
                     reference_number,
@@ -1106,12 +1536,18 @@ app.post("/create-checkout-session", async (req, res) => {
             try {
                 await pool.query(insertQuery, insertValues);
                 console.log('ps4b   New customer purchase record created for checkout session');
+                newNotes += `SUCCESS: New customer record created\n`;
 
             } catch (insertError) {
                 console.error('ps5b   Error creating new customer purchase record:', insertError);
+                newNotes += `ERROR: Failed to create customer record: ${insertError.message}\n`;
             }
         }
         //#endregion
+
+        newNotes += `CHECKOUT COMPLETION:\n`;
+        newNotes += `Redirecting to Stripe checkout at ${new Date().toISOString()}\n`;
+        newNotes += `Stripe session URL: ${session.url}\n`;
 
 
         res.redirect(303, session.url);
@@ -1279,4 +1715,53 @@ module.exports.sendPurchaseNotificationEmail = sendPurchaseNotificationEmail;
 module.exports.pool = pool;
 module.exports.emailTemplates = emailTemplates;
 module.exports.buildEstimateEmailMessage = emailTemplates.buildEstimateEmailMessage;
+module.exports.cleanupOrphanedFiles = cleanupOrphanedFiles;
+
+// Start server and run initial cleanup (only when not in test mode)
+if (require.main === module && process.env.NODE_ENV !== 'test') {
+    const server = app.listen(port, async () => {
+        console.log(`💼 Contact Page Application started on port ${port}`);
+        console.log(`🌐 Server URL: http://localhost:${port}`);
+        console.log(`📧 Email alerts: ${process.env.ADMIN_EMAIL || 'Not configured'}`);
+        console.log(`🏗️  Permit inbox: ${process.env.PERMIT_INBOX || 'Not configured'}`);
+        
+        // Run initial file cleanup on startup
+        try {
+            console.log('🧹 Running initial file cleanup...');
+            const cleanupStats = await cleanupOrphanedFiles(48); // Clean files older than 48 hours
+            console.log(`✅ Startup cleanup completed: ${cleanupStats.filesDeleted} files removed, ${cleanupStats.filesSkipped} files kept`);
+        } catch (cleanupError) {
+            console.error('⚠️  Error during startup cleanup:', cleanupError.message);
+        }
+        
+        // Schedule periodic cleanup every 6 hours
+        setInterval(async () => {
+            try {
+                console.log('🧹 Running scheduled file cleanup...');
+                const cleanupStats = await cleanupOrphanedFiles(48);
+                console.log(`✅ Scheduled cleanup completed: ${cleanupStats.filesDeleted} files removed`);
+            } catch (cleanupError) {
+                console.error('⚠️  Error during scheduled cleanup:', cleanupError.message);
+            }
+        }, 6 * 60 * 60 * 1000); // 6 hours in milliseconds
+    });
+    
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+        console.log('📴 SIGTERM received, shutting down gracefully...');
+        server.close(async () => {
+            try {
+                if (pool) {
+                    await pool.end();
+                    console.log('💾 Database connections closed');
+                }
+                console.log('✅ Server shutdown complete');
+                process.exit(0);
+            } catch (error) {
+                console.error('❌ Error during shutdown:', error);
+                process.exit(1);
+            }
+        });
+    });
+}
 

@@ -39,7 +39,7 @@ describe('Email Template Integration Tests', () => {
             expect(template).toHaveProperty('to');
             expect(template).toHaveProperty('subject');
             expect(template).toHaveProperty('text');
-            expect(template.to).toBe('buildingpermits@bpcsolutions.com.au');
+            expect(template.to).toBe(process.env.PERMIT_INBOX || 'permits@vicpa.com.au');
             expect(template.subject).toContain('NEW ESTIMATE REQUEST');
             expect(template.text).toContain('BUILDING PERMIT COST ESTIMATE REQUEST');
         });
