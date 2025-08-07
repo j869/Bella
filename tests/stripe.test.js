@@ -167,7 +167,10 @@ describe('Stripe Payment Integration', () => {
         customerName: 'Test Customer',
         customerPhone: '0412345678',
         referenceNumber: 'BPA-TEST-12345',
-        hasFullFormData: true
+        hasFullFormData: true,
+        streetAddress: '123 Test Street, Melbourne VIC 3000',
+        address_validation_method: 'regex-urban',
+        address_confidence: 'medium'
       };
 
       const response = await request(app)

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Address API Test Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .address-group {
+            position: relative;
+        }
+        .validation-feedback {
+            display: block;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+        .validation-feedback.valid {
+            color: #28a745;
+        }
+        .validation-feedback.invalid {
+            color: #dc3545;
+        }
+        .validation-feedback.warning {
+            color: #ffc107;
+        }
+        .address-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .suggestion-item:hover {
+            background-color: #f8f9fa;
+        }
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        .address-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            display: none;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+        .loading-spinner {
+            display: none;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="text-center mb-4">
+            <h2>Address API Test Form</h2>
+            <p class="text-muted">Test the real-time address validation and suggestions</p>
+        </div>
+
+        <form id="testForm">
+            <div class="mb-3">
+                <label for="streetAddress" class="form-label">Street Address *</label>
+                <div class="address-group">
+                    <input 
+                        type="text" 
+                        class="form-control" 
+                        id="streetAddress" 
+                        name="streetAddress" 
+                        placeholder="e.g., 123 Main Street, Melbourne VIC 3000"
+                        required
+                        autocomplete="off"
+                    >
+                    <div class="loading-spinner">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="address-suggestions" id="addressSuggestions"></div>
+                    <div class="validation-feedback" id="addressFeedback"></div>
+                </div>
+            </div>
+
+            <!-- Address Components Display -->
+            <div class="address-info" id="addressInfo">
+                <h6>Address Components:</h6>
+                <div class="info-row">
+                    <span>House Number:</span>
+                    <span id="houseNumber">-</span>
+                </div>
+                <div class="info-row">
+                    <span>Street:</span>
+                    <span id="street">-</span>
+                </div>
+                <div class="info-row">
+                    <span>Suburb:</span>
+                    <span id="suburb">-</span>
+                </div>
+                <div class="info-row">
+                    <span>State:</span>
+                    <span id="state">-</span>
+                </div>
+                <div class="info-row">
+                    <span>Postcode:</span>
+                    <span id="postcode">-</span>
+                </div>
+                <div class="info-row">
+                    <span>Validation:</span>
+                    <span id="validationMethod">-</span>
+                </div>
+                <div class="info-row">
+                    <span>Confidence:</span>
+                    <span id="confidence">-</span>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="button" class="btn btn-primary" onclick="testAddress()">
+                    Test Address Validation
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="clearResults()">
+                    Clear Results
+                </button>
+            </div>
+        </form>
+
+        <!-- Test Results Display -->
+        <div id="testResults" class="test-results" style="display: none;"></div>
+    </div>
+
+    <script>
+        class AddressValidator {
+            constructor() {
+                this.addressInput = document.getElementById('streetAddress');
+                this.suggestionsList = document.getElementById('addressSuggestions');
+                this.feedbackElement = document.getElementById('addressFeedback');
+                this.loadingSpinner = document.querySelector('.loading-spinner');
+                this.addressInfo = document.getElementById('addressInfo');
+                
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                let debounceTimer;
+                
+                this.addressInput.addEventListener('input', (e) => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        this.validateAddress(e.target.value);
+                    }, 500);
+                });
+
+                this.addressInput.addEventListener('blur', () => {
+                    setTimeout(() => {
+                        this.hideSuggestions();
+                    }, 200);
+                });
+
+                this.addressInput.addEventListener('focus', (e) => {
+                    if (e.target.value.length > 3) {
+                        this.validateAddress(e.target.value);
+                    }
+                });
+
+                // Hide suggestions when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.address-group')) {
+                        this.hideSuggestions();
+                    }
+                });
+            }
+
+            async validateAddress(address) {
+                if (!address || address.length < 3) {
+                    this.hideValidationFeedback();
+                    this.hideSuggestions();
+                    this.hideAddressInfo();
+                    return;
+                }
+
+                this.showLoading();
+                
+                try {
+                    const response = await fetch(`/validate-address?address=${encodeURIComponent(address)}`);
+                    const result = await response.json();
+                    
+                    console.log('Validation result:', result);
+                    this.displayValidationResult(result);
+                    
+                } catch (error) {
+                    console.error('Address validation error:', error);
+                    this.showValidationFeedback('Address validation service unavailable', 'invalid');
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            displayValidationResult(result) {
+                // Show validation feedback
+                if (result.success) {
+                    const feedbackClass = result.confidence === 'high' ? 'valid' : 
+                                        result.confidence === 'medium' ? 'warning' : 'valid';
+                    this.showValidationFeedback(result.message, feedbackClass);
+                    
+                    // Show address components
+                    this.displayAddressComponents(result);
+                    
+                } else {
+                    this.showValidationFeedback(result.message || 'Invalid address format', 'invalid');
+                    this.hideAddressInfo();
+                }
+
+                // Show suggestions if available
+                if (result.suggestions && result.suggestions.length > 0) {
+                    this.displaySuggestions(result.suggestions);
+                } else {
+                    this.hideSuggestions();
+                }
+            }
+
+            displayAddressComponents(result) {
+                document.getElementById('houseNumber').textContent = result.components.house_number || '-';
+                document.getElementById('street').textContent = result.components.road || '-';
+                document.getElementById('suburb').textContent = result.components.suburb || '-';
+                document.getElementById('state').textContent = result.components.state || '-';
+                document.getElementById('postcode').textContent = result.components.postcode || '-';
+                document.getElementById('validationMethod').textContent = result.source || '-';
+                document.getElementById('confidence').textContent = result.confidence || '-';
+                
+                this.addressInfo.style.display = 'block';
+            }
+
+            displaySuggestions(suggestions) {
+                this.suggestionsList.innerHTML = '';
+                
+                suggestions.forEach((suggestion, index) => {
+                    const suggestionItem = document.createElement('div');
+                    suggestionItem.className = 'suggestion-item';
+                    suggestionItem.innerHTML = `
+                        <div><strong>${suggestion.formatted}</strong></div>
+                        <small class="text-muted">${suggestion.display_name}</small>
+                    `;
+                    suggestionItem.addEventListener('click', () => {
+                        this.selectSuggestion(suggestion);
+                    });
+                    
+                    this.suggestionsList.appendChild(suggestionItem);
+                });
+                
+                this.suggestionsList.style.display = 'block';
+            }
+
+            selectSuggestion(suggestion) {
+                this.addressInput.value = suggestion.formatted;
+                this.hideSuggestions();
+                
+                // Trigger validation for the selected suggestion
+                this.validateAddress(suggestion.formatted);
+            }
+
+            showValidationFeedback(message, type) {
+                this.feedbackElement.textContent = message;
+                this.feedbackElement.className = `validation-feedback ${type}`;
+                this.feedbackElement.style.display = 'block';
+            }
+
+            hideValidationFeedback() {
+                this.feedbackElement.style.display = 'none';
+            }
+
+            hideSuggestions() {
+                this.suggestionsList.style.display = 'none';
+            }
+
+            hideAddressInfo() {
+                this.addressInfo.style.display = 'none';
+            }
+
+            showLoading() {
+                this.loadingSpinner.style.display = 'block';
+            }
+
+            hideLoading() {
+                this.loadingSpinner.style.display = 'none';
+            }
+        }
+
+        // Test functions
+        async function testAddress() {
+            const address = document.getElementById('streetAddress').value;
+            const resultsDiv = document.getElementById('testResults');
+            
+            if (!address) {
+                alert('Please enter an address to test');
+                return;
+            }
+
+            resultsDiv.style.display = 'block';
+            resultsDiv.textContent = 'Testing address validation...\n';
+
+            try {
+                const response = await fetch(`/validate-address?address=${encodeURIComponent(address)}`);
+                const result = await response.json();
+                
+                resultsDiv.textContent = `Test Results for: "${address}"\n\n` +
+                                        `Success: ${result.success}\n` +
+                                        `Valid: ${result.isValid}\n` +
+                                        `Confidence: ${result.confidence}\n` +
+                                        `Source: ${result.source}\n` +
+                                        `Address Type: ${result.addressType}\n` +
+                                        `Message: ${result.message}\n` +
+                                        `Formatted: ${result.formatted}\n` +
+                                        `Unmapped: ${result.unmapped || false}\n` +
+                                        `Fallback: ${result.fallback || false}\n\n` +
+                                        `Components:\n` +
+                                        `  House Number: ${result.components.house_number || 'N/A'}\n` +
+                                        `  Street: ${result.components.road || 'N/A'}\n` +
+                                        `  Suburb: ${result.components.suburb || 'N/A'}\n` +
+                                        `  State: ${result.components.state || 'N/A'}\n` +
+                                        `  Postcode: ${result.components.postcode || 'N/A'}\n\n` +
+                                        `Suggestions: ${result.suggestions ? result.suggestions.length : 0}\n` +
+                                        (result.suggestions && result.suggestions.length > 0 ? 
+                                         result.suggestions.map((s, i) => `  ${i+1}. ${s.formatted}`).join('\n') : '') +
+                                        `\n\nFull Response:\n` +
+                                        JSON.stringify(result, null, 2);
+                
+            } catch (error) {
+                resultsDiv.textContent = `Error testing address: ${error.message}`;
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('streetAddress').value = '';
+            document.getElementById('testResults').style.display = 'none';
+            document.getElementById('addressInfo').style.display = 'none';
+            document.getElementById('addressFeedback').style.display = 'none';
+            document.getElementById('addressSuggestions').style.display = 'none';
+        }
+
+        // Initialize the validator when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new AddressValidator();
+            
+            // Test with some sample addresses
+            const sampleAddresses = [
+                '90 forman rd shelbourne 3515',
+                '123 Collins Street, Melbourne VIC 3000',
+                'Lot 5 Estate Road, New Development VIC 3000',
+                '1234 Rural Highway, Farmville VIC 3515'
+            ];
+            
+            console.log('Address API Test Form loaded');
+            console.log('Try these sample addresses:', sampleAddresses);
+        });
+    </script>
+</body>
+</html>

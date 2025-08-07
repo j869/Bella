@@ -292,4 +292,62 @@ describe('Contact Page Application', () => {
       }
     });
   });
+
+  describe('Address Validation', () => {
+    it('should validate standard Australian addresses', async () => {
+      // Mock validateAddressWithFallback function - we need to import it
+      const app = require('../app');
+      
+      // Test standard urban address
+      const testAddress = '123 Main Street, Melbourne VIC 3000';
+      const result = await app.validateAddressWithFallback(testAddress);
+      
+      expect(result.isValid).toBe(true);
+      expect(result.confidence).toBeDefined();
+      expect(result.source).toBeDefined();
+    });
+
+    it('should handle subdivision addresses', async () => {
+      const app = require('../app');
+      
+      // Test subdivision address
+      const subdivisionAddress = 'Lot 5 Estate Road, New Development VIC 3000';
+      const result = await app.validateAddressWithFallback(subdivisionAddress);
+      
+      expect(result.isValid).toBe(true);
+      expect(result.addressType).toBe('subdivision');
+    });
+
+    it('should handle rural property addresses', async () => {
+      const app = require('../app');
+      
+      // Test rural address
+      const ruralAddress = '1234 Rural Road, Farmville VIC 3000';
+      const result = await app.validateAddressWithFallback(ruralAddress);
+      
+      expect(result.isValid).toBe(true);
+      expect(['rural', 'urban']).toContain(result.addressType); // Could be classified as either
+    });
+
+    it('should reject invalid address formats', async () => {
+      const app = require('../app');
+      
+      // Test invalid address
+      const invalidAddress = 'Not a valid address';
+      const result = await app.validateAddressWithFallback(invalidAddress);
+      
+      expect(result.isValid).toBe(false);
+      expect(result.message).toContain('format');
+    });
+
+    it('should handle empty or null addresses', async () => {
+      const app = require('../app');
+      
+      const emptyResult = await app.validateAddressWithFallback('');
+      expect(emptyResult.isValid).toBe(false);
+      
+      const nullResult = await app.validateAddressWithFallback(null);
+      expect(nullResult.isValid).toBe(false);
+    });
+  });
 });

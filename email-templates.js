@@ -154,6 +154,58 @@ function sysAdminNewCustomerAlertTemplate(data) {
                 html += `<div class="answer-highlight">${item.question}: <a href="mailto:${item.answer}" style="color: #667eea; text-decoration: none;">${item.answer}</a></div>`;
             } else if (item.question === 'Phone Number') {
                 html += `<div class="answer-highlight">${item.question}: <a href="tel:${item.answer}" style="color: #667eea; text-decoration: none;">${item.answer}</a></div>`;
+            } else if (item.question === 'Street Address') {
+                html += `<div class="answer-highlight">${item.question}: ${item.answer}`;
+                
+                // Add address validation information if available
+                if (item.quality) {
+                    const qualityColor = item.quality === 'high' ? '#28a745' : 
+                                       item.quality === 'medium' ? '#ffc107' : '#dc3545';
+                    html += `
+                        <div style="margin-top: 8px; font-size: 13px;">
+                            <span style="background: ${qualityColor}; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold;">
+                                ${item.quality.toUpperCase()} QUALITY
+                            </span>
+                            ${item.method ? ` (${item.method.replace(/-/g, ' ')})` : ''}
+                        </div>`;
+                    
+                    // Special handling for unmapped addresses (new developments, rural properties)
+                    const isUnmappedAddress = item.method && (
+                        item.method.includes('regex-subdivision') ||
+                        item.method.includes('regex-rural') ||
+                        item.method.includes('regex-urban')
+                    );
+                    
+                    if (isUnmappedAddress) {
+                        let alertMessage = '';
+                        let alertColor = '#007bff';
+                        
+                        if (item.method.includes('subdivision')) {
+                            alertMessage = '🏘️ NEW SUBDIVISION: May be a recently developed area not yet in mapping databases.';
+                        } else if (item.method.includes('rural')) {
+                            alertMessage = '🌾 RURAL PROPERTY: Remote/agricultural property - normal to be unmapped.';
+                            alertColor = '#28a745';
+                        } else if (item.method.includes('urban')) {
+                            alertMessage = '🏠 UNMAPPED URBAN: Address format valid but not found in database - may need verification.';
+                            alertColor = '#ffc107';
+                        }
+                        
+                        if (alertMessage) {
+                            html += `
+                                <div style="margin-top: 8px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid ${alertColor}; border-radius: 4px; font-size: 12px; font-weight: 500;">
+                                    ${alertMessage}
+                                </div>`;
+                        }
+                    }
+                    
+                    if (item.original && item.original !== item.answer) {
+                        html += `
+                            <div style="margin-top: 5px; font-size: 11px; color: #666; font-style: italic;">
+                                Original input: ${item.original}
+                            </div>`;
+                    }
+                }
+                html += `</div>`;
             } else {
                 html += `<div class="answer-highlight">${item.question}: ${item.answer}</div>`;
             }

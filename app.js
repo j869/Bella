@@ -37,30 +37,448 @@ const emailTemplates = require('./email-templates');
  * Maps form field names to human-readable labels for email templates
  */
 const formFieldMapping = {
-    customerName: 'Customer Name',
-    customerEmail: 'Email Address', 
-    phone: 'Phone Number',
-    streetAddress: 'Street Address',
-    foundation: 'Foundation Type',
-    location: 'Shed Location Description',
-    boundarySetbacks: 'Boundary Distance',
-    structureLength: 'Structure Length',
-    structureWidth: 'Structure Width',
-    dwellingOnProperty: 'Dwelling on Property',
-    adjacentDwelling: 'Adjacent Dwelling',
-    dwellingPermitted: 'Dwelling Permitted',
-    purpose: 'Primary Purpose',
-    'storageItems[]': 'Storage Items',
-    farmingOtherText: 'Other Farming Use',
-    domesticOtherText: 'Other Domestic Use', 
-    commercialOtherText: 'Commercial Use Details',
-    commercialZone: 'Commercial Zone',
-    buildingEnvelope: 'Building Envelope Restriction',
-    insideEnvelope: 'Inside Building Envelope',
-    easements: 'Easements on Property',
-    overEasement: 'Building Over Easement',
-    additionalInfo: 'Additional Information'
+    customerName: { label: 'Customer Name', type: 'text', required: true },
+    customerEmail: { label: 'Email Address', type: 'email', required: true }, 
+    phone: { label: 'Phone Number', type: 'tel', required: true },
+    streetAddress: { label: 'Street Address', type: 'address', validate: true, required: true },
+    foundation: { label: 'Foundation Type', type: 'select', required: true },
+    location: { label: 'Shed Location Description', type: 'textarea', required: false },
+    boundarySetbacks: { label: 'Boundary Distance', type: 'text', required: true },
+    structureLength: { label: 'Structure Length', type: 'number', required: true },
+    structureWidth: { label: 'Structure Width', type: 'number', required: true },
+    dwellingOnProperty: { label: 'Dwelling on Property', type: 'radio', required: true },
+    adjacentDwelling: { label: 'Adjacent Dwelling', type: 'radio', required: false },
+    dwellingPermitted: { label: 'Dwelling Permitted', type: 'radio', required: false },
+    purpose: { label: 'Primary Purpose', type: 'select', required: true },
+    'storageItems[]': { label: 'Storage Items', type: 'checkbox', required: false },
+    farmingOtherText: { label: 'Other Farming Use', type: 'text', required: false },
+    domesticOtherText: { label: 'Other Domestic Use', type: 'text', required: false }, 
+    commercialOtherText: { label: 'Commercial Use Details', type: 'text', required: false },
+    commercialZone: { label: 'Commercial Zone', type: 'radio', required: false },
+    buildingEnvelope: { label: 'Building Envelope Restriction', type: 'radio', required: false },
+    insideEnvelope: { label: 'Inside Building Envelope', type: 'radio', required: false },
+    easements: { label: 'Easements on Property', type: 'radio', required: false },
+    overEasement: { label: 'Building Over Easement', type: 'radio', required: false },
+    additionalInfo: { label: 'Additional Information', type: 'textarea', required: false },
+    
+    // New hidden fields for structured address data
+    address_house_number: { label: 'House Number', type: 'hidden', internal: true },
+    address_road: { label: 'Street Name', type: 'hidden', internal: true },
+    address_suburb: { label: 'Suburb', type: 'hidden', internal: true },
+    address_state: { label: 'State', type: 'hidden', internal: true },
+    address_postcode: { label: 'Postcode', type: 'hidden', internal: true },
+    address_validation_method: { label: 'Validation Method', type: 'hidden', internal: true },
+    address_confidence: { label: 'Address Confidence', type: 'hidden', internal: true }
 };
+
+/**
+ * Address Validation Functions
+ * Provides two-tier validation: OpenStreetMap Nominatim API + Regex fallback
+ */
+
+/**
+ * Validate address using regex patterns for Australian addresses
+ * @param {string} address - The address to validate
+ * @returns {Object} Validation result with isValid, confidence, addressType, components, message
+ */
+function validateAddressRegex(address) {
+    if (!address || typeof address !== 'string') {
+        return {
+            isValid: false,
+            confidence: 'low',
+            addressType: 'unknown',
+            components: {},
+            message: 'Please provide a valid address'
+        };
+    }
+
+    // Enhanced Australian address patterns for rural/new subdivision tolerance
+    const patterns = [
+        // Full format: "123 Main Street, Melbourne VIC 3000"
+        /^(\d+(?:[A-Za-z])?)\s+([A-Za-z\s'.-]+?)(?:,\s*)?([A-Za-z\s'.-]+?)(?:,?\s*)?(VIC|NSW|QLD|SA|WA|TAS|NT|ACT)\s*(\d{4})$/i,
+        
+        // Rural/subdivision format: "Lot 5 Main Street, New Estate VIC 3000"  
+        /^(Lot\s+\d+[A-Za-z]?)\s+([A-Za-z\s'.-]+?)(?:,\s*)?([A-Za-z\s'.-]+?)(?:,?\s*)?(VIC|NSW|QLD|SA|WA|TAS|NT|ACT)\s*(\d{4})$/i,
+        
+        // Rural property format: "1234 Rural Road, Farmville VIC 3000"
+        /^(\d+[A-Za-z]?)\s+([A-Za-z\s'.-]*?(?:Road|Rd|Street|St|Lane|Ln|Drive|Dr|Avenue|Ave|Highway|Hwy|Track|Tk))\s*,?\s*([A-Za-z\s'.-]+?)(?:,?\s*)?(VIC|NSW|QLD|SA|WA|TAS|NT|ACT)\s*(\d{4})$/i,
+        
+        // Format with postcode but no state: "123 Main Street, Suburb 3000" or "123 street name suburb 3000"
+        /^(\d+(?:[A-Za-z])?)\s+([A-Za-z\s'.-]*?(?:Road|Rd|Street|St|Lane|Ln|Drive|Dr|Avenue|Ave|Highway|Hwy|Track|Tk|way|Way|place|Place|court|Court|close|Close))\s+([A-Za-z\s'.-]+?)\s+(\d{4})$/i,
+        
+        // More flexible format: "90 forman rd shelbourne 3515"
+        /^(\d+(?:[A-Za-z])?)\s+([A-Za-z]+(?:\s+[A-Za-z]+)*)\s+(rd|road|st|street|ln|lane|dr|drive|ave|avenue|hwy|highway|tk|track|way|place|court|close)\s+([A-Za-z\s'.-]+?)\s+(\d{4})$/i,
+        
+        // Partial format with suburb: "123 Main Street, Melbourne" (requires comma or multiple words after street)
+        /^(\d+(?:[A-Za-z])?|Lot\s+\d+[A-Za-z]?)\s+([A-Za-z\s'.-]+?)(?:,\s+)([A-Za-z\s'.-]+?)$/i,
+        
+        // Basic format: "123 Main Street" or "Lot 5 Estate Road" (single street name, no suburb parsing)
+        /^(\d+(?:[A-Za-z])?|Lot\s+\d+[A-Za-z]?)\s+([A-Za-z\s'.-]+?)$/i,
+        
+        // Rural property number only: "1234 Some Rural Property Name"
+        /^(\d{3,}[A-Za-z]?)\s+([A-Za-z\s'.-]{10,})$/i
+    ];
+    
+    for (let i = 0; i < patterns.length; i++) {
+        const match = address.match(patterns[i]);
+        if (match) {
+            // Extract components first to check state
+            const components = extractRegexComponents(match);
+            
+            // Only allow Victoria addresses - reject other states
+            if (components.state && 
+                !['VIC', 'VICTORIA'].includes(components.state.toUpperCase()) &&
+                components.state.trim() !== '') {
+                continue; // Skip this pattern match if it's not Victoria
+            }
+            
+            const addressType = detectAddressType(match[1], match[2]);
+            return {
+                isValid: true,
+                confidence: i === 0 ? 'high' : i <= 2 ? 'medium' : 'low',
+                addressType: addressType,
+                components: components,
+                message: getValidationMessage(i, addressType)
+            };
+        }
+    }
+    
+    return {
+        isValid: false,
+        confidence: 'low',
+        addressType: 'unknown',
+        components: {},
+        message: 'Please use a Victoria address format like: "123 Main Street, Suburb VIC 3000" or "Lot 5 Estate Road, Development VIC 3000"'
+    };
+}
+
+/**
+ * Detect address type based on house number and street patterns
+ */
+function detectAddressType(houseNumber, street) {
+    if (houseNumber.toLowerCase().includes('lot')) {
+        return 'subdivision';
+    }
+    
+    if (parseInt(houseNumber) > 9999) {
+        return 'rural';
+    }
+    
+    const ruralStreetTypes = ['road', 'rd', 'track', 'tk', 'highway', 'hwy'];
+    const streetLower = street.toLowerCase();
+    if (ruralStreetTypes.some(type => streetLower.includes(type))) {
+        return 'rural';
+    }
+    
+    return 'urban';
+}
+
+/**
+ * Extract address components from regex match
+ */
+function extractRegexComponents(match) {
+    // Handle different pattern structures
+    if (match.length === 6 && match[3] && /^(rd|road|st|street|ln|lane|dr|drive|ave|avenue|hwy|highway|tk|track|way|place|court|close)$/i.test(match[3])) {
+        // Format: "90 forman rd shelbourne 3515" (street type separate)
+        return {
+            house_number: match[1] || '',
+            road: `${match[2]} ${match[3]}`, // Combine street name and type
+            suburb: match[4] || '',
+            state: 'VIC', // Default to VIC for Victoria addresses
+            postcode: match[5] || ''
+        };
+    } else if (match.length === 5 && match[4] && /^\d{4}$/.test(match[4])) {
+        // Format: "123 Main Street, Suburb 3000" (no state)
+        return {
+            house_number: match[1] || '',
+            road: match[2] || '',
+            suburb: match[3] || '',
+            state: 'VIC', // Default to VIC for Victoria addresses
+            postcode: match[4] || ''
+        };
+    } else if (match.length === 4 && match[3] && !match[3].match(/^\d{4}$/)) {
+        // Format: "123 Main Street, Suburb" (with comma, no postcode)
+        return {
+            house_number: match[1] || '',
+            road: match[2] || '',
+            suburb: match[3] || '',
+            state: '',
+            postcode: ''
+        };
+    } else if (match.length === 3) {
+        // Format: "123 Main Street" (basic format, no suburb)
+        return {
+            house_number: match[1] || '',
+            road: match[2] || '',
+            suburb: '',
+            state: '',
+            postcode: ''
+        };
+    } else {
+        // Standard format with state and postcode
+        return {
+            house_number: match[1] || '',
+            road: match[2] || '',
+            suburb: match[3] || '',
+            state: match[4] || '',
+            postcode: match[5] || ''
+        };
+    }
+}
+
+/**
+ * Get validation message based on pattern match and address type
+ */
+function getValidationMessage(patternIndex, addressType) {
+    const typeMessages = {
+        subdivision: 'New subdivision address format',
+        rural: 'Rural property address format',
+        urban: 'Urban address format'
+    };
+    
+    const qualityMessages = [
+        'Complete address format',
+        'Good address format (may be new development)',
+        'Acceptable address format',
+        'Basic address format (missing state/postcode)',
+        'Minimal address format',
+        'Rural property format'
+    ];
+    
+    const baseMessage = qualityMessages[patternIndex] || 'Address format detected';
+    const typeMessage = typeMessages[addressType] || '';
+    
+    return typeMessage ? `${baseMessage} - ${typeMessage}` : baseMessage;
+}
+
+/**
+ * Validate address using OpenStreetMap Nominatim API
+ * @param {string} address - The address to validate
+ * @returns {Promise<Object>} API validation result
+ */
+async function validateWithNominatim(address) {
+    const nominatimBaseUrl = 'https://nominatim.openstreetmap.org/search';
+    
+    try {
+        const params = new URLSearchParams({
+            format: 'json',
+            addressdetails: '1',
+            limit: '10', // Get more results to filter for Victoria only
+            countrycodes: 'au',
+            state: 'Victoria', // Prefer Victoria results
+            q: address
+        });
+        
+        const response = await axios.get(`${nominatimBaseUrl}?${params}`, {
+            headers: {
+                'User-Agent': 'VictorianPermitApplications/1.0'
+            },
+            timeout: 5000
+        });
+        
+        // Filter results to only include Victoria addresses
+        const allResults = response.data || [];
+        const victoriaResults = allResults.filter(result => {
+            const addr = result.address || {};
+            const state = addr.state || '';
+            
+            // Check for various forms of "Victoria" in the state field
+            return state.toLowerCase().includes('victoria') || 
+                   state.toLowerCase() === 'vic' ||
+                   state.toLowerCase() === 'vic.' ||
+                   // Also check if the address components suggest Victoria
+                   (result.display_name && result.display_name.toLowerCase().includes('vic')) ||
+                   (result.display_name && result.display_name.toLowerCase().includes('victoria'));
+        });
+        
+        console.log(`Nominatim returned ${allResults.length} results, ${victoriaResults.length} in Victoria`);
+        
+        return {
+            success: true,
+            results: victoriaResults.slice(0, 5) // Limit to 5 Victoria results
+        };
+        
+    } catch (error) {
+        console.warn('Nominatim API error:', error.message);
+        return {
+            success: false,
+            error: error.message,
+            results: []
+        };
+    }
+}
+
+/**
+ * Main address validation function with fallback logic
+ * @param {string} address - The address to validate
+ * @returns {Promise<Object>} Complete validation result
+ */
+async function validateAddressWithFallback(address) {
+    if (!address || typeof address !== 'string' || address.trim().length < 3) {
+        return {
+            isValid: false,
+            confidence: 'low',
+            source: 'none',
+            addressType: 'unknown',
+            components: {},
+            message: 'Please provide a valid address',
+            formatted: address
+        };
+    }
+
+    // First, try API validation - this should be the primary method
+    try {
+        const apiResult = await validateWithNominatim(address);
+        
+        if (apiResult.success && apiResult.results.length > 0) {
+            // Use first result from Nominatim
+            const firstResult = apiResult.results[0];
+            const components = extractNominatimComponents(firstResult);
+            
+            return {
+                isValid: true,
+                confidence: 'high',
+                source: 'nominatim',
+                addressType: 'api-verified',
+                components: components,
+                message: `Found ${apiResult.results.length} matching address${apiResult.results.length > 1 ? 'es' : ''} in Victoria`,
+                formatted: formatDisplayAddress(firstResult),
+                nominatim_result: firstResult,
+                api_results_count: apiResult.results.length
+            };
+        }
+        
+        console.log('🔍 API returned 0 results, trying regex fallback for:', address);
+        
+    } catch (apiError) {
+        console.warn('Nominatim API error, falling back to regex:', apiError.message);
+    }
+    
+    // Only use regex validation as fallback when API returns 0 results or fails
+    const regexResult = validateAddressRegex(address);
+    
+    if (regexResult.isValid) {
+        return {
+            isValid: true,
+            confidence: regexResult.confidence,
+            source: 'regex-fallback',
+            addressType: regexResult.addressType,
+            components: regexResult.components,
+            message: regexResult.message + ' (not found in mapping database - may be new development)',
+            formatted: address,
+            fallback: true
+        };
+    }
+    
+    // Both API and regex failed
+    return {
+        isValid: false,
+        confidence: 'low',
+        source: 'failed',
+        addressType: 'unknown',
+        components: {},
+        message: 'Please use a Victoria address format like: "123 Main Street, Suburb VIC 3000"',
+        formatted: address
+    };
+}
+
+/**
+ * Format display address from Nominatim result
+ */
+function formatDisplayAddress(result) {
+    const addr = result.address || {};
+    const parts = [
+        addr.house_number,
+        addr.road,
+        addr.suburb || addr.city || addr.town,
+        addr.state,
+        addr.postcode
+    ].filter(part => part && part.trim());
+    
+    return parts.join(', ');
+}
+
+/**
+ * Process address data for form submission
+ * @param {Object} formData - Form submission data
+ * @returns {Object} Processed address data
+ */
+function processAddressData(formData) {
+    const addressData = {
+        original: formData.streetAddress || '',
+        houseNumber: formData.address_house_number || '',
+        road: formData.address_road || '',
+        suburb: formData.address_suburb || '',
+        state: formData.address_state || '',
+        postcode: formData.address_postcode || '',
+        validationMethod: formData.address_validation_method || 'none',
+        confidence: formData.address_confidence || 'low'
+    };
+
+    // Create formatted display address
+    const formatParts = [
+        addressData.houseNumber,
+        addressData.road,
+        addressData.suburb,
+        addressData.state,
+        addressData.postcode
+    ].filter(part => part && part.trim());
+
+    addressData.formatted = formatParts.length > 2 ? 
+        formatParts.join(', ') : 
+        addressData.original;
+
+    // Determine address quality
+    addressData.quality = calculateAddressQuality(addressData);
+    
+    return addressData;
+}
+
+/**
+ * Calculate address quality score based on validation method and completeness
+ */
+function calculateAddressQuality(addressData) {
+    let score = 0;
+    
+    // Method scoring - enhanced for unmapped addresses
+    switch (addressData.validationMethod) {
+        case 'nominatim':
+            score += 40;
+            break;
+        case 'regex-subdivision':
+            score += 35; // High score for properly formatted subdivision addresses
+            break;
+        case 'regex-rural':
+            score += 30; // Good score for rural properties
+            break;
+        case 'regex-urban':
+            score += 25; // Medium score for unmapped urban addresses
+            break;
+        case 'regex-fallback':
+            score += 20;
+            break;
+        default:
+            score += 5;
+    }
+    
+    // Component completeness scoring
+    if (addressData.houseNumber || addressData.houseNumber.includes('Lot')) score += 15;
+    if (addressData.road) score += 20;
+    if (addressData.suburb) score += 15;
+    if (addressData.state) score += 5;
+    if (addressData.postcode) score += 5;
+    
+    // Bonus for complete unmapped addresses (likely new developments)
+    if (addressData.validationMethod.includes('regex')) {
+        if (addressData.houseNumber && addressData.road && addressData.suburb && addressData.postcode) {
+            score += 10; // Bonus for complete unmapped address
+        }
+    }
+    
+    if (score >= 80) return 'high';
+    if (score >= 60) return 'medium';
+    return 'low';
+}
 
 /**
  * Dynamic form data processor
@@ -73,20 +491,42 @@ function processFormData(reqBody) {
     
     for (const [fieldName, fieldValue] of Object.entries(reqBody)) {
         if (fieldValue && fieldName in formFieldMapping) {
-            const label = formFieldMapping[fieldName];
+            const fieldConfig = formFieldMapping[fieldName];
             
-            // Handle different field types
+            // Skip internal fields in main processing
+            if (fieldConfig.internal) {
+                continue;
+            }
+            
             let displayValue = fieldValue;
-            if (Array.isArray(fieldValue)) {
-                displayValue = fieldValue.join(', ');
+            let additionalData = {};
+            
+            // Special processing for address field
+            if (fieldName === 'streetAddress') {
+                const addressData = processAddressData(reqBody);
+                displayValue = addressData.formatted;
+                additionalData = {
+                    original: addressData.original,
+                    quality: addressData.quality,
+                    method: addressData.validationMethod,
+                    confidence: addressData.confidence,
+                    addressType: addressData.houseNumber.toLowerCase().includes('lot') ? 'subdivision' : 
+                                parseInt(addressData.houseNumber) > 9999 ? 'rural' : 'urban'
+                };
+            } else {
+                // Handle different field types
+                if (Array.isArray(fieldValue)) {
+                    displayValue = fieldValue.join(', ');
+                }
             }
             
             // Skip empty values
             if (displayValue && displayValue.toString().trim()) {
                 processedData.push({
-                    question: label,
+                    question: fieldConfig.label,
                     answer: displayValue,
-                    fieldName: fieldName
+                    fieldName: fieldName,
+                    ...additionalData
                 });
             }
         }
@@ -578,6 +1018,103 @@ app.get('/get-location', async (req, res) => {
 });
 
 /**
+ * Address validation and suggestion endpoint
+ * Provides real-time address validation and suggestions using OpenStreetMap Nominatim API
+ * with regex fallback for new subdivisions and rural properties
+ * 
+ * @route GET /validate-address
+ * @param {Object} req - Express request object
+ * @param {string} req.query.address - Address to validate
+ * @returns {Object} JSON object containing validation results and suggestions
+ */
+app.get('/validate-address', async (req, res) => {
+    try {
+        const address = req.query.address;
+        
+        if (!address || address.trim().length < 3) {
+            return res.json({
+                success: false,
+                message: 'Please provide an address with at least 3 characters',
+                suggestions: []
+            });
+        }
+
+        console.log(`x4        ADDRESS VALIDATION REQUEST: "${address}" from ${req.clientIp}`);
+        
+        // Use our existing validation function
+        const validationResult = await validateAddressWithFallback(address);
+        
+        let suggestions = [];
+        
+        // If we got Nominatim results, format them as suggestions
+        if (validationResult.source === 'nominatim' && validationResult.nominatim_result) {
+            // We only have one result from the main validation, but we can call Nominatim again for more suggestions
+            try {
+                const nominatimResult = await validateWithNominatim(address);
+                if (nominatimResult.success && nominatimResult.results.length > 0) {
+                    // Filter and format suggestions - only Victoria addresses
+                    suggestions = nominatimResult.results
+                        .filter(result => {
+                            const addr = result.address || {};
+                            const state = addr.state || '';
+                            // Double-check Victoria filtering for suggestions
+                            return state.toLowerCase().includes('victoria') || 
+                                   state.toLowerCase() === 'vic' ||
+                                   state.toLowerCase() === 'vic.' ||
+                                   (result.display_name && result.display_name.toLowerCase().includes('vic')) ||
+                                   (result.display_name && result.display_name.toLowerCase().includes('victoria'));
+                        })
+                        .slice(0, 5) // Limit to 5 suggestions
+                        .map(result => ({
+                            display_name: result.display_name,
+                            formatted: formatDisplayAddress(result),
+                            address: result.address,
+                            lat: result.lat,
+                            lon: result.lon,
+                            importance: result.importance,
+                            confidence: 'high',
+                            source: 'nominatim'
+                        }));
+                }
+            } catch (apiError) {
+                console.warn('Additional suggestions API error:', apiError.message);
+            }
+        }
+        
+        // Add regex validation info
+        const regexResult = validateAddressRegex(address);
+        
+        const response = {
+            success: validationResult.isValid,
+            isValid: validationResult.isValid,
+            confidence: validationResult.confidence,
+            source: validationResult.source,
+            addressType: validationResult.addressType,
+            message: validationResult.message,
+            components: validationResult.components,
+            formatted: validationResult.formatted,
+            suggestions: suggestions,
+            regexValidation: regexResult,
+            unmapped: validationResult.unmapped || false,
+            fallback: validationResult.fallback || false
+        };
+        
+        console.log(`x5        ADDRESS VALIDATION RESULT: ${validationResult.isValid ? 'VALID' : 'INVALID'} (${validationResult.confidence}) - ${suggestions.length} suggestions`);
+        
+        res.json(response);
+        
+    } catch (error) {
+        console.error('Address validation endpoint error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Address validation service temporarily unavailable',
+            message: 'Please try again or enter address manually',
+            suggestions: []
+        });
+    }
+});
+
+/**
  * Manual file cleanup route (admin only)
  * Triggers cleanup of orphaned files in uploads directory
  * 
@@ -612,6 +1149,20 @@ app.get('/admin/cleanup-files', async (req, res) => {
             details: error.message 
         });
     }
+});
+
+/**
+ * Test address validation page
+ * Simple form to test the address validation API without database integration
+ * 
+ * @route GET /test-address
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {String} Rendered test address form
+ */
+app.get('/test-address', (req, res) => {
+    console.log('test1      USER('+ req.clientIp + ') is loading the address test form');
+    res.render('test-address');
 });
 
 /**
@@ -720,6 +1271,28 @@ app.post('/submit-estimate-request', upload.fields([
     // Process form data dynamically for email templates
     const processedFormData = processFormData(req.body);
     newNotes += `Processed ${processedFormData.length} form fields dynamically\n`;
+
+    // Add address validation if streetAddress is provided
+    if (req.body.streetAddress) {
+        try {
+            const addressValidation = await validateAddressWithFallback(req.body.streetAddress);
+            req.addressValidation = addressValidation;
+            newNotes += `Address validation: ${addressValidation.confidence} confidence via ${addressValidation.source}\n`;
+            newNotes += `Address type: ${addressValidation.addressType}, Valid: ${addressValidation.isValid}\n`;
+            if (addressValidation.unmapped) {
+                newNotes += `NOTE: Address not in mapping database - may be new development\n`;
+            }
+        } catch (validationError) {
+            console.warn('Address validation error:', validationError);
+            newNotes += `Address validation failed: ${validationError.message}\n`;
+            req.addressValidation = {
+                isValid: false,
+                confidence: 'low',
+                source: 'error',
+                message: 'Validation failed'
+            };
+        }
+    }
 
     // Send sysadmin heads-up email asynchronously
     try {
@@ -1426,7 +1999,15 @@ app.post("/create-checkout-session", async (req, res) => {
                 referenceNumber: referenceNumber || 'unknown',
                 customerEmail: customerEmail || 'not-provided',
                 customerName: customerName || 'Customer',
-                customerPhone: customerPhone || 'Not provided'
+                customerPhone: customerPhone || 'Not provided',
+                // Add validated address data if available
+                ...(req.addressValidation && {
+                    addressValidated: req.addressValidation.isValid ? 'true' : 'false',
+                    addressSource: req.addressValidation.source || 'unknown',
+                    addressConfidence: req.addressValidation.confidence || 'low',
+                    addressType: req.addressValidation.addressType || 'unknown',
+                    formattedAddress: req.addressValidation.formatted || req.body.streetAddress || ''
+                })
             }
         };
         console.log('ps5    initialising stripe session configuration:', sessionConfig);
@@ -1763,5 +2344,15 @@ if (require.main === module && process.env.NODE_ENV !== 'test') {
             }
         });
     });
+}
+
+// Export functions for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = app; // Export the main app
+    module.exports.validateAddressWithFallback = validateAddressWithFallback;
+    module.exports.validateAddressRegex = validateAddressRegex;
+    module.exports.validateWithNominatim = validateWithNominatim;
+    module.exports.processAddressData = processAddressData;
+    module.exports.calculateAddressQuality = calculateAddressQuality;
 }
 

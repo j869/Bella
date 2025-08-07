@@ -5,6 +5,8 @@
 
 This document outlines a **completely FREE** address verification system using OpenStreetMap Nominatim API as the primary validation method, with client-side regex validation as a fallback. This approach provides professional address validation without any licensing costs or usage limits.
 
+**Geographic Scope: Victoria Only** - System validates and returns only Victorian addresses, rejecting other Australian states.
+
 **Difficulty Assessment: MEDIUM** - Requires API integration and fallback logic, but uses entirely free services.
 
 **Total Implementation Cost: $0** - No licensing fees, API costs, or ongoing charges.

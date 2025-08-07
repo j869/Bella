@@ -61,8 +61,16 @@ describe('Email Template Integration Tests', () => {
         });
 
         test('should generate job information template for permit specialists', () => {
+            const processedFormData = [
+                { question: 'Customer Name', answer: mockData.customerName, fieldName: 'customerName' },
+                { question: 'Email Address', answer: mockData.customerEmail, fieldName: 'customerEmail' },
+                { question: 'Phone Number', answer: mockData.phone, fieldName: 'phone' },
+                { question: 'Street Address', answer: '123 Test Street, Melbourne VIC 3000', fieldName: 'streetAddress' }
+            ];
+            
             const template = emailTemplates.sysAdminNewCustomerAlertTemplate({
                 formData: mockData,
+                processedFormData: processedFormData,
                 referenceNumber: mockData.referenceNumber,
                 clientIp: mockData.clientIp
             });
