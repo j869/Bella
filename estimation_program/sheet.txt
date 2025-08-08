@@ -1,0 +1,923 @@
+					#Construction Sheet													
+																		
+																		
+																		
+																		
+	=Home!F8			=Home!F9&" "&Home!F10&" "&Home!F11&" "&Home!F12			=Home!M14											
+	Shed Size																	
+	Width:	=Coding!J56		Length:	=Coding!J57	Height:	=Coding!J58											
+	Kit Price																	
+	=Coding!E30+Coding!F30+Coding!G30																	
+	Insert Colour Selection Here																	
+	Erecting:																	
+	Insert Erection Option Here																	
+	Finished Floor Option:																	
+	Insert Concrete Option Here																	
+	=IF(B15="Partial slab: Insert Details Below","Width of partial slab:","")				=IF(B15="Partial slab: Insert Details Below","Length of partial slab:","")													
+	=IF(B15="Partial slab: Insert Details Below","Insert Footings Required Below",IF(B15="Footings only","Insert Footings Required Below",""))																	
+																		
+	Site fall and levelling:																	
+	Is the Site Flat?		Insert Fill Option Here															
+	Stormwater:									Insert Distance from Bendigo Here								
+	Stormwater:		Insert Stormwater Option Here							Within a 30km radius								
+	Restricted Access: 									Further than 30kms away								
+	Restricted Access: 		Insert Restricted Access Option Here							=B10+B34								
+	Distance from Bendigo:																	
+	Insert Distance from Bendigo Here																	
+	Who will the builder be?																	
+	Select a Builder							=IF(OR(B31="Building By Bryan Pty. Ltd.",B31="Peter Carr Constructions Pty. Ltd.",B31="Accomplish Concrete & Construction",B31="Kyle Chant",Construction!B31="James Walters"),"Trusted Builder Selected, Partner price applicable","Owner builder fees apply")										
+	=ETCOW!B39																	
+																		
+																		
+																		
+																		
+																		
+																		
+																		
+																		
+							#Home Sheet
+
+
+												
+												
+												
+What would you like to do?												
+										Estimate V15.3		
+												
+	REFERRED BY		Select Referral					Garage				
+	NAME		0					WIDTH		=IF(OR('C:\Excel\[Price_64.xlsm]Input'!$B$100>=1,'C:\Excel\[Price_64.xlsm]Input'!$B$101>=1),O8+'C:\Excel\[Price_64.xlsm]Input'!$B$100+'C:\Excel\[Price_64.xlsm]Input'!$B$101,O8)		=IF(OR(Coding!H64="GARAGE",Coding!H64="CARPORT",Coding!H64="SHED C75",Coding!H64="FARM SHED",Coding!H64="MACHINERY SHED"),'C:\Excel\[Price_64.xlsm]Input'!$B$18+@'C:\Excel\Price_64.xlsm'!LEFT_SKILLION_WIDTH+@'C:\Excel\Price_64.xlsm'!RIGHT_SKILLION_WIDTH,IF(Coding!H64="GARAGE/CARPORT",'C:\Excel\[Price_64.xlsm]Input'!$B$18,IF(Coding!H64="BARN",'C:\Excel\[Price_64.xlsm]Input'!$B$18+'C:\Excel\[Price_64.xlsm]Input'!$B$44+'C:\Excel\[Price_64.xlsm]Input'!$B$45,IF(OR(Coding!H64="SKILLION",Coding!H64="SKILLION CARPORT"),'C:\Excel\[Price_64.xlsm]Input'!$B$18+'C:\Excel\[Price_64.xlsm]Input'!$B$44+'C:\Excel\[Price_64.xlsm]Input'!$B$45,""))))
+	STREET NO.		0					LENGTH		=IF(OR(Coding!H64="GARAGE",Coding!H64="CARPORT",Coding!H64="SHED C75",Coding!H64="FARM SHED",Coding!H64="MACHINERY SHED"),'C:\Excel\[Price_64.xlsm]Input'!$B$19,IF(Coding!H64="GARAGE/CARPORT",'C:\Excel\[Price_64.xlsm]Input'!$B$19+'C:\Excel\[Price_64.xlsm]Input'!$B$63,IF(Coding!H64="BARN",'C:\Excel\[Price_64.xlsm]Input'!$B$19,IF(OR(Coding!H64="SKILLION",Coding!H64="SKILLION CARPORT"),'C:\Excel\[Price_64.xlsm]Input'!$B$19,""))))		
+	STREET		0					HEIGHT		='C:\Excel\[Price_64.xlsm]Input'!$B$20		
+	SUBURB		0					WING HEIGHT		=IF(Coding!H64="BARN",'C:\Excel\[Price_64.xlsm]Input'!$C$44,"N/A BARNS ONLY")		
+	POSTCODE		='C:\Excel\[Price_64.xlsm]Input'!$A$7					APEX		=IF(OR(Coding!H64="SKILLION",Coding!H64="SKILLION CARPORT"),'C:\Excel\[Price_64.xlsm]Input'!$C$44,IF(K7="BARN",(M10+O12),Coding!V27))		=IF(K7="BARN",(@'C:\Excel\Price_64.xlsm'!GARAGE_WIDTH/2)*Coding!Y27)
+	TELEPHONE		='C:\Excel\[Price_64.xlsm]QUOTE'!$C$12					PITCH		='C:\Excel\[Price_64.xlsm]Input'!$B$17		
+	MOBILE		='C:\Excel\[Price_64.xlsm]Input'!$B$9					QUOTE NO.				
+	EMAIL		0					KIT PRICE		0		
+												
+												
+												
+												
+												
+												
+												
+												
+												
+												
+												
+												
+												
+#questionare sheet
+
+
+												
+=IF(AND(A9+A81>=9999,OR(A32=200,A34=200)),"How long in millimetres is the boundary that the length of the shed abutts?","")									=IF(AND(A9>=9999,OR(A32=200,A34=200)),"Recommended maximum shed length:","")			
+									=IF(AND(A83>0,Coding!R29>=10000),Coding!R29,IF(AND(A83>0,Coding!R29<10000),10000,0))			
+=IF(A9>10000,"How far away is the intended Stormwater Discharge Point?","")												
+												
+Is a structure being removed for the construction of the proposal?												
+Insert answer here												
+=IF(A87="Yes","How big is the structure being removed? (In m²)","")												
+												
+=IF(AND(A38>0,A38<9000),"Insert Below, the front boundary offsets of both neighbours homes","")												
+=IF(AND(A38>0,A38<9000),"Left Neighbour","")				=IF(AND(A38>0,A38<9000),"AVG","")	=IF(AND(A38>0,A38<9000),"Right Neighbour","")							
+				=IF(OR(A92>0,F92>0),AVERAGE(A92,F92),0)								
+=IF(AND(Coding!O129=TRUE,A55<=6000),"What year was the house built in?","")												
+												
+Is the proposed shed North of a Neighbours Recreational Open Space?												
+Insert Answer Here												
+Is there a pool over the other side of the abutting boundary?												
+												
+Items intended to be stored inside shed:												
+1				4							='ABC & BPA Form'!L208	
+2				5							='ABC & BPA Form'!L209	
+3				6							='ABC & BPA Form'!L210	
+						Shed					='ABC & BPA Form'!L211	
+					=Home!M8/1000	Width					='ABC & BPA Form'!L212	
+Permeability/Coverage					=Home!M9/1000	Length					='ABC & BPA Form'!L213	
+Proposed size				=F104*F105								
+Existing (small) Sheds/Pergolas/Eaves				0								
+Existing Dwelling/Large Sheds				0								
+Concrete				0	=(E106+E108+E107)/E110*100							
+Site				1								
+Building Coverage:				=IF(E108>0,LEFT(F109,5)&"%","")								
+Permeable Surfaces:				=(E110 - (E106 + E108 + E109+E107)) / E110								
+Garden Area				=ROUNDUP(((E110 - (E106 + E108)) / E110) * 100,1)&"%"								
+
+
+
+#Best sheds Quoting
+
+
+																						
+																						
+																						
+																						
+																						
+																						
+																						
+															=IF(Construction!I31="Trusted Builder Selected, Partner price applicable","Using Builder","Owner Builder")		Rural/distance fees					825
+															=IF(P8="Owner Builder",345,0)	=IF(P9=0,2,3)	=IF(COUNTIF(Coding!AC3:AC27, Questionnaire!D5), Q9 * 275, 0)					
+																						
+																						
+																						
+																						
+																						
+																						
+	=Home!F8		='C:\Users\Owner\AppData\Local\Microsoft\Windows\INetCache\Content.Outlook\RXHPTUKP\[Estimation program V 15.xlsm]Cover Sheet'!D179																			
+	=Home!F9&" "&Home!F10&" "&Home!F11&" "&Home!F12									=Coding!P60		=P9+K17+R9+825										
+	Created	=NOW()			=Home!M5					=Coding!P42		=IF(K18>0,K18+209,0)										
+			=Coding!P125							=Coding!P74		=IF(K19>0,K19+50,0)										
+		BUILDING PERMIT QUOTE								=Coding!P117		=IF(K20>0,K20+425,0)										
+		Building Permit		=M17					=IF(Construction!I31="Trusted Builder Selected, Partner price applicable",(Coding!N46+Coding!N50+Coding!N52+Coding!N54+Coding!N109+Coding!N111+Coding!N113+Coding!N121+Coding!N127+Coding!N133)*170.46,(Coding!N46+Coding!N50+Coding!N52+Coding!N54+Coding!N109+Coding!N111+Coding!N113+Coding!N121+Coding!N127+Coding!N133)*290.46)	=IF(Coding!S26>=1,Coding!P46+Coding!P50+Coding!P52+Coding!P54+Coding!P109+Coding!P111+Coding!P113+Coding!P121+Coding!P127+Coding!P133,0)		=IF(K21>0,ROUNDUP(K21+J21,1),0)										
+								                		=Coding!P62		=IF(K22>0,K22,0)										
+		Estimated Completion Date For Building Permit		=TODAY()+28						=Coding!P64		=IF(K23>0,K23+50,0)										
+										=Coding!P66		=IF(K24>0,K24+250,0)										
+			=IF(Questionnaire!D5="Insert Council Here","Council has not been selected. Quote is invalid.","")							=Coding!P68		=IF(K25>0,K25+104.8,0)										
+	Recommended Boundary offsets as per Building Codes Australia:									=Coding!P48		=IF(K26>0,K26+75,0)										
+	Width Offset:		=Questionnaire!J34							=Coding!P44		0										
+	Length Offset:		=Questionnaire!J32							=Coding!P56		=IF(K28>0,K28+200,0)										
+	Assigned Boundary offsets for the above proposal:									=Coding!P58		=IF(K29>0,K29+200,0)										
+	Width Offset:		=Questionnaire!A34							=Coding!P72		0										
+	Length Offset: 		=Questionnaire!A32							=Coding!P107		=IF(K31>0,K31+100,0)										
+										=Coding!P115		=IF(K32>0,K32+50,0)										
+	Disclaimer;									=Coding!P119		=IF(K33>0,K33+150,0)										
+	The above pricing is an estimate for a Building permit ONLY 									=Coding!P123		=K34										
+	Prices may change subject to additional information required for final approval which may be shown below.									=Coding!P129		=K35										
+	="An outbuilding for the storage of: "&'ABC & BPA Form'!B215									=Coding!P131		=K36										
+	If applicable, please ensure you check your title’s Encumberances, Caveats & Notices for restrictions											=SUM(M18:N36)										
+	 before purchasing your new structure. VPA is here to guide and assist land owners, but we are unable																					
+	 to take responsibility for the purchase of any non-compliant structure. If the design or location of your 																					
+	structure changes in any way, this fee proposal is no longer valid unless otherwise specified.																					
+	Additional permits and information you may require consist of:																					
+	=IF(Coding!P111>1,"Proposal will likely need a firewall","")																					
+	Planning Permit		Soil Report		LPOD																	
+	Planning Enquiry		Build over Consent - Council		BAL Assessment																	
+	Bushfire Management Plan		Build over consent - Water Authority		Advertising																	
+	AHD- Flooding Land Survey		Combined Allotment		ESD Assessment																	
+	Custom Engineering Designs		Report and Consent		Demolition Report																	
+	CCTV GPS Pipe Locating		Form 8 Protection Works		Property Info Request																	
+	Travel Costs - Unserviced Areas				Overshadow Plan																	
+	=IF(M37=0,"","If required, this additional information may cost approximately $"&M37)																					
+	Additional information requirements may extend the completion date.																					
+	Please ensure you've planned for unexpected situations and verify that																					
+	 your permitting agency has addressed all potential requirements when comparing prices																					
+																						
+																						
+																						
+																						
+																						
+																						
+	=IF(P18>45646.63021,"This permit cannot be guaranteed before Christmas","")																					
+
+
+
+
+#Coding
+
+
+
+PATCH NOTES	=Home!M5							=ETCOW!B13+ETCOW!B15																				
+27.05.2025	Fixed Owner Builder/Private Builder fees																											
+27.05.2025	Fixed travel fees to council																										Insert Council Here	=AB56
+27.05.2025	Added Kit price to home page																							Select a Builder			Alpine Shire Council	=AB85
+27.05.2025	Added notice to add council															Liked Cell VVV								Owner Builder			Ararat Rural City Council	=AB66
+27.05.2025	Added Folder creating via "Start quoting" button												Insert Relevant Council Here			5								Building By Bryan Pty. Ltd.			Ballarat City Council	=AB20
+27.05.2025	added save copy of worksheet and quote version creating via print button												Other				Lassi Maps							Peter Carr Constructions Pty. Ltd.			Banyule City Council	=AB14
+27.05.2025	Added James Walters and Leigh shed guys to referrals												Mount Alexander				Lassi Maps							James Walters			Bass Coast Shire Council	=AB26
+28.05.2025	Code now opens the windows explorer folder it saves files to.								Insert Builder Selection Here				Central Goldfields Shire Council				https://centralgoldfields.pozi.com/#/x[143.74000]/y[-36.98546]/z[11]/							Private Builder/Unknown			Baw Baw Shire Council	=AB64
+28.05.2025	James Walters has been added as a trusted RBP								Client				City of Glen Eira				https://gleneira.pozi.com/#/x[145.04000]/y[-37.90001]/z[13]/							Neville Lowry			Bayside City Council	=AB19
+29.05.2025	Construction estimate has been fixed for Eureka								Contractor				City of Greater Bendigo				https://bendigo.pozi.com/#/x[144.43973]/y[-36.72353]/z[10]/							Accomplish Concrete & Construction			Benalla Rural City Council	=AB75
+29.05.2025	ETCOW Tab created.								Insert Erection Option Here				Greater Shepparton City Council				https://shepparton.pozi.com/#/x[145.42000]/y[-36.43050]/z[11]/							HDLCC			Boroondara City Council	=AB11
+29.05.2025	T&C's updated to VPA Staff under point 8								Footings only				Hindmarsh Shire Council				https://hindmarsh.pozi.com/#/x[141.74000]/y[-36.04185]/z[10]/							Kyle Chant			Brimbank City Council	=AB77
+29.05.2025	Fixed bug where first intended use item wasn't showing up on form/quote								Concretor				Horsham Rural City				https://horsham.pozi.com/#/x[142.12000]/y[-36.83105]/z[10]/							Victoria			Buloke Shire Council	=AB42
+*Erecting Rate						25	122		Client Doing own Slab				Loddon Shire Council				https://loddon.pozi.com/#/x[143.83000]/y[-36.41161]/z[10]/							New South Whales			Campaspe Shire Council	=AB49
+0.4	=IF(Construction!B13="Contractor",TRUE,FALSE)	=IF(B16=TRUE,I45*A16,0)	=IF(Construction!B13="Client",TRUE,FALSE)			50	115		Partial slab: Insert Details Below				Macedon Ranges Shire Council				https://macedonranges.pozi.com/#/x[144.62000]/y[-37.34038]/z[11]/							INSERT STATE HERE			Cardinia Shire Council	Ararat Rural City Council
+*100mm slab						80	108		Insert Concrete Option Here				Northern Grampians Shire Council				https://northerngrampians.pozi.com/#/x[142.87500]/y[-36.82110]/z[10]/							Up to 16k			Casey City Council	Mildura Rural City Council
+=VLOOKUP(J62,G15:H20,2)	=IF(Construction!B15="Concretor",TRUE,FALSE)	=IF(AND(J62<=15,B18=TRUE),2700,IF(AND(J62>15,J62<=25,B18=TRUE),3100,IF(AND(J62>25,B18=TRUE),E19,0)))	=IF(Construction!B15="Client",TRUE,FALSE)			120	103		Yes				Rural City of Wangaratta				https://wangaratta.pozi.com/#/x[146.43500]/y[-36.62196]/z[10]/							Between 16k & 20k			Central Goldfields Shire Council	South Gippsland Shire Council
+*Partial Slab	=IF(Construction!B15="Partial slab: Insert Details Below",TRUE,FALSE)			=J62*A18	=A20*F20	160	99		No				Strathbogie Shire				https://strathbogie.pozi.com/#/x[145.33000]/y[-36.72561]/z[11]/							Between 20k & 30k			Colac Otway Shire Council	East Gippsland Shire Council
+=IF(B19=TRUE,VLOOKUP(J62,G15:H20,2),0)	=IF(AND(F20<=15,B19=TRUE),2700,IF(AND(F20>15,F20<=25,B19=TRUE),3100,IF(F20>25,F19,0)))	=IF(Construction!B15="Partial Slab: Insert Details Below",TRUE,FALSE)	=IF(AND(C20=TRUE,Construction!D16>100),Construction!D16/1000,Construction!D16)	=IF(AND(C20=TRUE,Construction!H16>100),Construction!H16/1000,Construction!H16)	=D20*E20	240	96		Insert Fill Option Here				Swan Hill Rural City Council				https://swanhill.pozi.com/#/x[143.17500]/y[-35.10689]/z[10]/							Between 30k & 40k			Corangamite Shire Council	Wangaratta Rural City Council
+*footings									Full Zinc				Wimmera Shire Council				https://wcma.pozi.com/#/x[142.16000]/y[-36.50961]/z[9]/							Between 40k & 50k			Darebin City Council	Benalla Rural City Council
+=IF(H64="CARPORT",440,464)	=C22	=IF(Construction!B18>=0.5,Construction!B18*A22,0)	=IF(Construction!B15="Footings only",C48*A22,0)						Zinc Roof with Colour Walls/Trims				Yarriambiack Shire Council				https://yarriambiack.pozi.com/#/x[142.41000]/y[-36.03348]/z[9]/							Between 50k & 75k			East Gippsland Shire Council	Alpine Shire Council
+*Scissor Hire									Full Colour				Insert answer here											Between 75k & 100k			Frankston City Council	Towong Shire Council
+	=E24+F24	=IF(J58>3000,TRUE,FALSE)		=IF(AND(C24=TRUE,J57>=10000),VLOOKUP(J57,T91:U131,2),0)	=IF(C24=TRUE,VLOOKUP(J58,P75:Q105,2),0)				Insert Colour Selection Here				Yes			=IF(Questionnaire!A32<1000,TRUE,FALSE)	=IF(Questionnaire!A34<1000,TRUE,FALSE)	=Coding!X31+Coding!X32+Coding!W32	=Coding!X26					Between 100k & 125k			Gannawarra Shire Council	Southern Grampians Shire Council
+*crushed rock allowance for uneven sites REDUNDANT 20/09/2021									Client to Handle Stormwater Connection				No	=IF(AND(Questionnaire!A32=200,Questionnaire!A32<Questionnaire!J32),TRUE,FALSE)	=IF(AND(Questionnaire!A34=200,Questionnaire!A34<Questionnaire!J34),TRUE,FALSE)	=IF(AND(R26=FALSE,S25=FALSE,Questionnaire!A32<S24,Questionnaire!A32>0),TRUE,IF(AND(R26=FALSE,S25=FALSE,Q24=TRUE,Questionnaire!A32>0),TRUE,FALSE))	=IF(AND(R27=FALSE,S25=FALSE,Questionnaire!A34<T24,Questionnaire!A34>0),TRUE,IF(AND(R27=FALSE,S25=FALSE,R24=TRUE,Questionnaire!A34>0),TRUE,FALSE))	=IF(OR(H64="CARPORT",H64="SKILLION CARPORT"),TRUE,FALSE)						Between 125k & 150k			Glen Eira City Council	Pyrenees Shire Council
+=IF(B26=TRUE,5,0)	=IF(Construction!D20="No",TRUE,FALSE)	=(C19*D19)*A26	=IF(OR(C18>0,B20>0),650,IF(AND(Home!K7="Shed C75",OR(C18>0,B20>0,)),0,0))						Builder to handle Stormwater Connection				=IF(Questionnaire!A28="GRZ/LDR - General Residential, Low Density Residential",TRUE,FALSE)	FALSE	=IF(N31=TRUE,TRUE,FALSE)	=IF(Questionnaire!A28="FSZ - Farming Zone | RCZ - Rural Conservation Zone",TRUE,FALSE)	=IF(Questionnaire!A32=200,TRUE,FALSE)	=Coding!P46+Coding!P50+Coding!P52+Coding!P54+P109+P111+P121+P127+P133	3600	1000	=Questionnaire!A30*1000	=IF(V27>=3600,TRUE,FALSE)	=IF(W26=TRUE,VLOOKUP(V27,T26:U90,2),200)			Select Referral	Glenelg Shire Council	Gannawarra Shire Council
+*Client own slab				Restricted Access - REDUNDANT 20/09/2021					Insert Stormwater Option Here				=IF(AND(Questionnaire!A49="Yes",OR(P28=TRUE,Q26=TRUE)),TRUE,FALSE)	FALSE	=IF(Questionnaire!A71="Farm Shed.",TRUE,FALSE)	=IF(AND(Q26=TRUE,Questionnaire!A32>0,Questionnaire!A34>0,OR(Questionnaire!A32<5000,Questionnaire!A34<5000)),TRUE,FALSE)	=IF(Questionnaire!A34=200,TRUE,FALSE)	=IF(Questionnaire!A77="Yes",TRUE,FALSE)	=T26+100	=U26+30	=ROUNDUP(V26,-2)+100	=(J56/2)*Y27	=(J58/1000)+(W27/1000)	=IF(J61=Home!M13,TAN(RADIANS(Home!M13)),0)		Referred by ACC	Golden Plains Shire Council	Wellington Shire Council
+=IF(Construction!B15="Client Doing own Slab",TRUE,FALSE)	=IF(AND(J62<=15,A28=TRUE),2700,IF(AND(J62>15,J62<=25,B18=TRUE,A28=TRUE),3100,IF(AND(J62>25,A28=TRUE),E19,0)))			=IF(Construction!D24="Minor Restricted Access",200,0)	=IF(Construction!D24="Moderate Restricted Access",500,0)	=IF(Construction!D24="Severe Restricted Access",1300,0)	=E28+F28+G28	=F29+I29+H31	GRZ/LDR - General Residential, Low Density Residential				FALSE	FALSE	=IF(Questionnaire!A28="RLZ - Rural Living Zone",TRUE,FALSE)	=IF(AND(Q26=TRUE,Questionnaire!A51>0,Questionnaire!A51<100000),TRUE,FALSE)	=(Questionnaire!A83-10000)*25%	=IF(AND(Questionnaire!A51>1,Questionnaire!A51<1150),TRUE,FALSE)	=T27+100	=U27+30	BUILDING PERMIT					Referred by Alicia	Gr Bendigo City Council	
+				=IF(Construction!D22="Builder to Handle Stormwater Connection",TRUE,FALSE)	=IF(E29=TRUE,935,0)	Stormwater		=IF(AND(Construction!D22="Builder to handle Stormwater Connecton",E29=TRUE),935,0)	TZ - Township Zone				FALSE	FALSE	=IF(AND(P28=TRUE,Questionnaire!A32>0,Questionnaire!A34>0,OR(Questionnaire!A32<10000,Questionnaire!A34<10000)),TRUE,FALSE)	=IF(AND(Questionnaire!A73<100000,N28=TRUE,Questionnaire!A73>0,OR(P28=TRUE,Q26=TRUE)),TRUE,FALSE)	=10000+R28	=IF(Questionnaire!#REF!="Yes",TRUE,FALSE)	=T28+100	=U28+30		=VLOOKUP(Y29,H69:N78,7)		=X41		Referred by Brent	Gr Dandenong City Council	
+				=IF(E31=TRUE,'C:\Excel\[Price_64.xlsm]QUOTE'!$D$64,0)	=IF(F31=TRUE,'C:\Excel\[Price_64.xlsm]QUOTE'!$E$64,0)	=Home!M15	Kit Price	=IF(I32>30000,I32-30000,0)	RLZ - Rural Living Zone				FALSE	FALSE	=IF(AND(Questionnaire!A38<20000,Questionnaire!A38>0,OR(P28=TRUE,Q26=TRUE)),TRUE,FALSE)	=IF(AND(Questionnaire!A75<40000,N29=TRUE,Questionnaire!A75>0,OR(P28=TRUE,Q26=TRUE)),TRUE,FALSE)	=IF(AND(Questionnaire!A32=200,Questionnaire!A83>=1,Questionnaire!A9>=Questionnaire!J83,OR(Q31=TRUE,N26=TRUE)),TRUE,FALSE)	FALSE	=T29+100	=U29+30						Referred by Christine	Gr Geelong City Council	
+				=IF(Construction!B11="Full Zinc",TRUE,FALSE)	=IF(Construction!B11="Zinc Roof with Colour Walls/Trims",TRUE,FALSE)	=IF(Construction!B11="Full Colour",TRUE,FALSE)	=IF(I32>30000,I31*40,0)	=IF(I32>30000,I30/1000,0)	FSZ - Farming Zone | RCZ - Rural Conservation Zone				FALSE	=IF(AND(J62>=100,Q26=TRUE),TRUE,FALSE)	=IF(AND(N28=TRUE,P28=TRUE,Questionnaire!A38<=40),TRUE,FALSE)	=IF(Questionnaire!A28="TZ - Township Zone",TRUE,FALSE)	=IF(AND(Questionnaire!A38<Questionnaire!E92,Questionnaire!E92>0,Questionnaire!A38<9000),TRUE,FALSE)	=IF(AND(O26=TRUE,J62>=100),TRUE,FALSE)	=T30+100	=U30+30	=Coding!J58	=IF(V31>=3599,TRUE,FALSE)	=IF(W31=TRUE,VLOOKUP(V32,T26:U90,2),0)			Referred by Dan	Gr Shepparton City Council	
+				=J62/50	=IF(F33=0,EVEN(E32),0)	=F32+F33	=G32-2	=(H32*H33)+J56+Questionnaire!A85	Insert Land Zone here				FALSE	=IF(N34=TRUE,TRUE,FALSE)	=IF(AND(P28=TRUE,Questionnaire!A51<50000,Questionnaire!A51>0),TRUE,FALSE)	=IF(AND(Questionnaire!A69="Slab",O31=TRUE,O35>=100),TRUE,FALSE)	=IF(AND(Questionnaire!A40="Yes",Questionnaire!A42<=1999,OR(Q31=TRUE,N26=TRUE)),TRUE,FALSE)	=IF(AND(Questionnaire!A28="RLZ - Rural Living Zone",Questionnaire!A42<20000,Questionnaire!A42>1),TRUE,IF(AND(Questionnaire!A28="FSZ - Farming Zone | RCZ - Rural Conservation Zone",Questionnaire!A42<20000,Questionnaire!A42>1),TRUE,FALSE))	=T31+100	=U31+30	=ROUNDUP(V31,-2)+100	=IF(AND(X32=0,V31<=3100),200,0)	=IF(AND(V31>3200,V31<3600),1000,0)			Referred by Ish	Greater Bendigo City Council	
+					=IF(OR(H64="SKILLION","SKILLION CARPORT"),ROUNDUP(E32,0),0)		=J57/G32		Insert Restricted Access Option Here				=IF(OR(N27=TRUE,O31=TRUE),TRUE,FALSE)	=IF(ETCOW!B39>=10000,TRUE,FALSE)	Residential planning				=T32+100	=U32+30	CLIENT DOING OWN ERECTING					Referred by James Walters	Greater City Council	
+% INCREASE FOR RBP ADJUSTMENT			=IF(AND(A40>605,A40<=11000),A40+(A40*1%),IF(AND(A40>11000,A40<=12000),A40+(A40*2%),IF(AND(A40>12000,A40<=13000),A40+(A40*3%),IF(AND(A40>13000,A40<=14000),A40+(A40*4%),IF(AND(A40>14000,A40<=15200),A40+(A40*5%),IF(AND(A40>16000,A40<=60000),A40+(A40*11.5%),IF(AND(A40>60000,A40<=100000),A40+(A40*10%),IF(A40>100000,A40+(A40*8.5%),0))))))))						Minor Restricted Access				=IF(AND(O26=TRUE,J62>=100),TRUE,FALSE)	=IF(AND(O28=TRUE,O31=TRUE),TRUE,FALSE)	=IF(AND(Questionnaire!A71="Domestic Shed",N35=TRUE,X41<100000),946,IF(AND(N40=TRUE,OR(Questionnaire!A71="Domestic Shed",'BBB Estimate'!Q33=TRUE),OR('BBB Estimate'!Q30=TRUE,X41<100000)),946,0))		=IF(AND(Questionnaire!A71="Domestic Shed",N35=TRUE,X41>=100000),1840,IF(AND(N40=TRUE,OR(Questionnaire!A71="Domestic Shed",'BBB Estimate'!Q33=TRUE),OR('BBB Estimate'!S30=TRUE,X41>100000)),1840,0))		=T33+100	=U33+30	=IF(D16=TRUE,J45*A16,0)					Referred by James (Eureka Bendigo)	Greater Dandenong City Council	
+*Added fees to cover Bryan on Farm Sheds and owner builder projects									Moderate Restricted Access				=IF(OR(N30=TRUE,N31=TRUE,N32=TRUE,S31=TRUE,O27=TRUE,O28=TRUE,O29=TRUE,O30=TRUE,S27=TRUE,S30=TRUE,O31=TRUE,P29=TRUE,P30=TRUE,P31=TRUE,P32=TRUE,Q27=TRUE,Q28=TRUE,Q29=TRUE,Q30=TRUE,S32=TRUE,N27=TRUE),TRUE,FALSE)	=IF(Construction!B15="Partial slab: Insert Details Below",(Construction!D16*Construction!H16)/1000000,Coding!J62)	Farm Planning				=T34+100	=U34+30						Referred by Joel	Greater Geelong City Council	
+FS >100m²		FS <100m²	OB $6k-$10k		OB $10k-$16k		OB <10m²		Severe Restricted Access				Insert Answer Here		=IF(AND(Questionnaire!A71="Farm Shed.",X41<100000,Q26=TRUE,P27=TRUE,OR(P29=TRUE,P30=TRUE,N35=TRUE)),1840,IF(AND(N40=TRUE,X41>0,OR('BBB Estimate'!S33=TRUE,Questionnaire!A71="Farm Shed."),OR('BBB Estimate'!Q30=TRUE,X41<100000)),1840,0))		=IF(AND(Questionnaire!A71="Farm Shed.",X41>100000,Q26=TRUE,P27=TRUE,OR(P29=TRUE,P30=TRUE,N35=TRUE)),2375,IF(AND(N40=TRUE,OR('BBB Estimate'!S33=TRUE,Questionnaire!A71="Farm Shed."),OR('BBB Estimate'!S30=TRUE,X41>100000)),2375,0))		=T35+100	=U35+30						Referred by Jordyn	Greater Shepparton City Council	
+=IF(AND(X41>=16000,B38=TRUE,A38=TRUE,C38=FALSE),500,0)		=IF(AND(X41>=16000,C38=TRUE,A38=TRUE,B38=FALSE),500,0)	=IF(AND(E38=TRUE,J45>=6000,J45<=9999,I40=FALSE,H38=FALSE),330,0)		=IF(AND(E38=TRUE,J45>=10000,J45<=15999,I40=FALSE,H38=FALSE),500,0)		=IF(H38=TRUE,400,0)	=A37+C37+D37+F37+H37+I39	No Restricted Access				Yes		Commercial Planning				=T36+100	=U36+30	CLIENT DOING OWN STORMWATER					Referred by Leigh - Shed Guys	Hepburn Shire Council	
+=IF(Construction!D33="Farm Shed Owner Builder",TRUE,FALSE)	=IF(Construction!C8*Construction!F8>=100,TRUE,FALSE)	=IF(Construction!C8*Construction!F8<=99.9,TRUE,FALSE)		=IF(OR(Construction!D33="Owner Builder",Construction!D33="Private Builder"),TRUE,FALSE)		=IF(A40>605,88,0)	=IF(AND(Construction!C8*Construction!F8<=20,Construction!C8*Construction!F8>=10.001),TRUE,FALSE)	OB 10m²-20m²	Insert Use Option Here				No		=IF(OR('BBB Estimate'!Q34=TRUE,Questionnaire!A71="Commercial Shed"),3414,0)				=T37+100	=U37+30	=IF(Construction!D22="Client to Handle Stormwater Connection",825,0)					Referred by Lee	Hindmarsh Shire Council	
+Total of all construction, NOT including RBP								=IF(I40=TRUE,500,0)	Farm Shed.				Neighbouring lot						=T38+100	=U38+30	*RBP					Referred by Mickaela	Hobsons Bay City Council	
+=C16+C18+B20+B22+B24+D37+F37+H37+I39+C37+A37+B48+I28+D26+D48+Construction!B29+Construction!F29								=IF(AND(Construction!C8*Construction!F8<=10,Construction!C8*Construction!F8>=0.5),TRUE,FALSE)	Domestic Shed				='BBB Estimate'!J30						=T39+100	=U39+30	0	0	TRUE	FALSE		Referred by Stacey	Horsham Rural City Council	
+*Manual overrides							=IF(A43>0.5,TRUE,FALSE)		Commercial Shed				507.54		Total for Planning				=T40+100	=U40+30	11000	=X41*2.5%	=J45+C16+C18+B20+B24+D37+F37+H37+I39+L46+V34+V38+I28+D26+B22+B48+D48+Construction!B29+Construction!F29+B28			Referred by Steve	Hume City Council	
+Use this manual override when you wish to manually input a total amount									Home					=IF(OR(P34>=800,R34>=800,P36>=800,R36>=800),56,IF(P38>1,112,0))	=P34+R34+P36+R36+P38				=T41+100	=U41+30	12000	=X41*3.5%				Referred by Other	Indigo Shire Council	
+															Soil Report				=T42+100	=U42+30	13000	=X41*4.5%				Test	Kingston City Council	
+Use this manual override when you wish to manually input an additional fee														=IF(P44>=1,28,0)	=IF(OR('BBB Estimate'!J39=TRUE,Q32=TRUE),1050,0)				=T43+100	=U43+30	14000	=X41*5.5%		=IF(X40=TRUE,VLOOKUP(X41,V40:W56,2),0)		Insert Answer Here	Knox City Council	
+								=J45+L46	=I46+J46+K46						=IF(P46=0,"","Reg 87")				=T44+100	=U44+30	15000	=(X41*6.5%)				Yes	Latrobe City Council	
+Use this manual override to remove delivery. *Use positive SUM only*								=IF(I47=TRUE,E30-L46,0)	=IF(J47=TRUE,F30-L46,0)	=IF(K47=TRUE,G30-L46,0)	='C:\Excel\[Price_64.xlsm]QUOTE'!$C$65		=IF(P46>0,1,0)	=IF(P46>=1,14,0)	=IF(Questionnaire!A53="No",N41,0)				=T45+100	=U45+30	16000	=X41*13%				No	Loddon Shire Council	
+0								=IF(Construction!B11="Full Zinc",TRUE,FALSE)	=IF(Construction!B11="Zinc Roof with Colour Walls/Trims",TRUE,FALSE)	=IF(Construction!B11="Full Colour",TRUE,FALSE)					Combined Alotment				=T46+100	=U46+30	75000	=X41*12%				Yes but there's no risk of Reg 83 violation	Macedon Ranges Shire Council	
+*Footing Insolators	=IF(AND(J62>=100,Construction!B15="Concretor"),C48*50,0)	=A49+B49+C49+C50+A50+B50+D49	=IF(AND(H64="CARPORT",Construction!B15="Concretor"),Coding!A49*200,0)						Insert Flooring Option Here					=IF(P48>=1,7,0)	=IF(OR('BBB Estimate'!J38=TRUE,Questionnaire!A53="Neighbouring lot"),216,0)				=T47+100	=U47+30	100000	=X41*10%					Manningham City Council	
+=IF(OR(Coding!H64="GARAGE",Coding!H64="FARM SHED",H64="SKILLION"),@'C:\Excel\Price_64.xlsm'!NUMBER_BAYS*2+2,IF(OR(Coding!H64="CARPORT",H64="SKILLION CARPORT"),@'C:\Excel\Price_64.xlsm'!NUMBER_BAYS*2+2,IF(Coding!H64="BARN",@'C:\Excel\Price_64.xlsm'!NUMBER_BAYS*4+4,IF(H64="MACHINERY SHED",@'C:\Excel\Price_64.xlsm'!NUMBER_BAYS*2+2,IF(H64="GARAGE/CARPORT",@'C:\Excel\Price_64.xlsm'!NUMBER_BAYS*2+'C:\Excel\[Price_64.xlsm]Input'!$B$64*2+2)))))	=IF(AND(J56>=4500,@'C:\Excel\Price_64.xlsm'!GARAGE_WIDTH<=9000,D50=0,OR(Coding!H64="GARAGE",Coding!H64="FARM SHED",H64="GARAGE/CARPORT")),2,IF(AND(D50=0,@'C:\Excel\Price_64.xlsm'!GARAGE_WIDTH>=4500,@'C:\Excel\Price_64.xlsm'!GARAGE_WIDTH<=9000,H64="BARN"),2,IF(AND(D50=0,@'C:\Excel\Price_64.xlsm'!GARAGE_WIDTH>=4500,@'C:\Excel\Price_64.xlsm'!GARAGE_WIDTH<=9000,H64="MACHINERY SHED"),3,0)))	=IF(AND(D50=0,J56>9000,OR(Coding!H64="GARAGE",Coding!H64="FARM SHED")),4,IF(AND(D50=0,@'C:\Excel\Price_64.xlsm'!GARAGE_WIDTH>9000,Coding!H64="BARN"),4,IF(AND(D50=0,@'C:\Excel\Price_64.xlsm'!GARAGE_WIDTH>9000,H64="MACHINERY SHED"),5,0)))	=IF(AND(D50>=1,E49=TRUE),ROUNDDOWN(D50,-0.01)*2,0)	=IF(OR(H64="Carport",H64="Barn",H64="SKILLION CARPORT"),FALSE,TRUE)					Footings						=IF(P50=0,"","Reg 80")				=T48+100	=U48+30	150000	2237					Mansfield Shire Council	
+=IF(AND(@'C:\Excel\Price_64.xlsm'!LEFT_SKILLION_WIDTH>=3601,@'C:\Excel\Price_64.xlsm'!GARAGE_WIDTH<=5999,OR(Coding!H64="BARN",H64="SKILLION")),2,0)	=IF(OR(@'C:\Excel\Price_64.xlsm'!LEFT_VERANDAH_WIDTH>=1,@'C:\Excel\Price_64.xlsm'!RIGHT_VERANDAH_WIDTH>=1),A49/2,0)	=IF(AND(@'C:\Excel\Price_64.xlsm'!RIGHT_SKILLION_WIDTH>=3601,@'C:\Excel\Price_64.xlsm'!GARAGE_WIDTH<=5999,OR(Coding!H64="BARN",H64="SKILLION")),2,0)	=IF(@'C:\Excel\Price_64.xlsm'!BAY_SIZE>4500,@'C:\Excel\Price_64.xlsm'!GARAGE_WIDTH/'C:\Excel\[Price_64.xlsm]Input'!$B$15,0)						Slab OR Partial Slab				=IF(P50>0,1,0)	=IF(P50>=1,14,0)	=IF(OR(O25=TRUE,P25=TRUE,R30=TRUE),N41,0)				=T49+100	=U49+30	200000	2737					Maribyrnong City Council	
+									Insert Dwelling location option here						=IF(P52=0,"","Reg 74")				=T50+100	=U50+30	250000	3162					Maroondah City Council	
+									Yes				=IF(P52>0,1,0)	=IF(P52>=1,17,0)	=IF(OR(R31=TRUE,R32=TRUE),N41,0)				=T51+100	=U51+30	300000	3588					Melbourne City Council	
+									No						=IF(P54=0,"","Reg 79")				6300	1810	350000	4013					Melton Shire Council	
+MANUAL PERMIT									Neighbouring lot				=IF(P54>0,1,0)	=IF(P54>=1,14,0)	=IF(OR(Q25=TRUE,R25=TRUE),N41,0)				=T53+100	=U53+30	400000	4428					Mildura Rural City Council	
+N/R			0												Build over Consent - Council				=T54+100	=U54+30	450000	4647					Mitchell Shire Council	
+Vicsmart < $10,000			=IF(Permits!D18="Vicsmart < $10,000",864,0)	=IF((D56>1),2,0)			WIDTH		=Home!M8					=IF(P56>=1,28,0)	=IF(OR('BBB Estimate'!J40=TRUE,Questionnaire!A67="Yes"),437,0)				=T55+100	=U55+30	500000	4647					Moira Shire Council	
+Vicsmart > $10,000			=IF(Permits!D18="Vicsmart > $10,000",864,0)	=IF((D57>1),2,0)			LENGTH		=Home!M9						Build over Consent - Water Authority				=T56+100	=U56+30	REG 75						Monash City Council	
+Planning Permit 			=IF(Permits!D18="Planning Permit ",864,0)	=IF((D58>1),4,0)			HEIGHT		=Home!M10					=IF(P58>=1,28,0)	=IF(OR(Questionnaire!A65="Yes",Questionnaire!A63="Yes",'BBB Estimate'!J41=TRUE),437,0)				=T57+100	1960	=800*Y27	=V58+J58+100	=IF(AND(Questionnaire!A32="200",Coding!W58>=3600),TRUE,FALSE)	=IF(AND(Questionnaire!A34="200",J60>=3500),TRUE,FALSE)			Moonee Valley City Council	
+Farm Shed Planning Permit			=IF(Permits!D18="Farm Shed Planning Permit",1572,0)	=IF((D59>1),4,0)			WING HEIGHT		=Home!M11						Building Permit				=T58+100	2000							Moorabool Shire Council	
+							APEX		=Home!M12					=IF(P60>=1,28,0)	=IF(AND(Questionnaire!A24="Yes",Questionnaire!A71="Commercial Shed"),3600,IF(Questionnaire!A24="Yes",W29,0))				=T59+100	2100							Moreland City Council	
+Reg 74	=IF(Permits!D21="Reg 74",TRUE,FALSE)	=IF(Permits!D22="Reg 74",TRUE,FALSE)	=IF(OR(B61=TRUE,B62=TRUE,B63=TRUE,B64=TRUE,B65=TRUE),TRUE,FALSE)	=IF(D61=TRUE,423,0)	=IF((E61>1),2,0)		PITCH		=Home!M13						BMP				=T60+100	=U60+100							Mornington Pen Shire Council	
+Reg 79	=IF(Permits!D21="Reg 79",TRUE,FALSE)	=IF(Permits!D22="Reg 79",TRUE,FALSE)	=IF(OR(C61=TRUE,C62=TRUE,C63=TRUE,C64=TRUE,C65=TRUE),TRUE,FALSE)	=IF(D62=TRUE,423,0)	=IF((E62>1),2,0)		M²		=(Home!M8*Home!M9)/1000000					=IF(P62>=1,7,0)	=IF(OR('BBB Estimate'!J34=TRUE,O32=TRUE),700,0)				=T61+100	=U61+100							Mornington Peninsula Shire Council	
+Reg 80	=IF(Permits!D21="Reg 80",TRUE,FALSE)	=IF(Permits!D22="Reg 80",TRUE,FALSE)					QUOTE NO.		=Home!M14						BAL Assessment				=T62+100	=U62+100							Mount Alexander Shire Council	
+Reg 87	=IF(Permits!D21="Reg 87",TRUE,FALSE)	=IF(Permits!D22="Reg 87",TRUE,FALSE)					='C:\Excel\[Price_64.xlsm]Input'!$B$16							=IF(P64>=1,7,0)	=IF(AND(O32=TRUE,Questionnaire!A55<=9999,Questionnaire!A55>1),325,IF('BBB Estimate'!J35=TRUE,325,0))				=T63+100	=U63+100							Moyne Shire Council	
+Other Reg	=IF(Permits!D21="Other Reg",TRUE,FALSE)	=IF(Permits!D22="Other Reg",TRUE,FALSE)													AHD Land Survey				=T64+100	=U64+100							Mt Alexander Shire Council	
+N/R														=IF(P66>=1,28,0)	=IF(OR(N31=TRUE,N32=TRUE,'BBB Estimate'!J36=TRUE),1200,0)				=T65+100	=U65+100							Murrindindi Shire Council	
+							Mick's fee schedule								LPOD				=T66+100	=U66+100							Nillumbik Shire Council	
+FALSE	=IF((A68=TRUE),1,0)						COW	RBP	Owner	Levy	Cfee	GST	Total	=IF(P68>=1,14,0)	=IF(OR(Questionnaire!A53="No",Questionnaire!A53="Neighbouring lot"),262,IF(Questionnaire!A71="Commercial Shed",262,IF('BBB Estimate'!J37=TRUE,262,0)))				=T67+100	=U67+100							Northern Grampians Shire Council	
+FALSE	=IF((A69=TRUE),1,0)						0	=IF('Best Sheds Quoting'!P8="Using Builder",815,0)	=IF('Best Sheds Quoting'!P8="Owner Builder",915,0)	20.46	134.4	=(I69+J69+K69+L69)*10%	=ROUNDUP(I69+J69+K69+L69+M69,0)		Build over Consent				=T68+100	=U68+100							Nthn Grampians Shire Council	
+FALSE	=IF((A70=TRUE),2,0)						16000	=IF('Best Sheds Quoting'!P8="Using Builder",830,0)	=IF('Best Sheds Quoting'!P8="Owner Builder",930,0)	25.58	134.4	=(I70+J70+K70+L70)*10%	=ROUNDUP(I70+J70+K70+L70+M70,0)	=IF(P70>=1,28,0)	=IF(Questionnaire!A67="Yes",437,0)				=T69+100	=U69+100							Port Phillip City Council	
+FALSE	=IF((A71=TRUE),2,0)						20000	=IF('Best Sheds Quoting'!P8="Using Builder",860,0)	=IF('Best Sheds Quoting'!P8="Owner Builder",960,0)	38.38	134.4	=(I71+J71+K71+L71)*10%	=ROUNDUP(I71+J71+K71+L71+M71,0)		Slab/footing Engineering				=T70+100	=U70+100							Pyrenees Shire Council	
+FALSE	=IF((A72=TRUE),4,0)						30000	=IF('Best Sheds Quoting'!P8="Using Builder",885,0)	=IF('Best Sheds Quoting'!P8="Owner Builder",985,0)	51.18	134.4	=(I72+J72+K72+L72)*10%	=ROUNDUP(I72+J72+K72+L72+M72,0)	=IF(P72>=1,28,0)	=IF(OR(P58>=1,Q32=TRUE,'BBB Estimate'!J42=TRUE),1287,0)				=T71+100	=U71+100							South Gippsland Shire Council	
+FALSE	=IF((A73=TRUE),4,0)						40000	=IF('Best Sheds Quoting'!P8="Using Builder",905,0)	=IF('Best Sheds Quoting'!P8="Owner Builder",1005,0)	63.98	134.4	=(I73+J73+K73+L73)*10%	=ROUNDUP(I73+J73+K73+L73+M73,0)		Planning Enquiry				=T72+100	=U72+100							Southern Grampians Shire Council	
+FALSE	=IF((A74=TRUE),4,0)						50000	=IF('Best Sheds Quoting'!P8="Using Builder",950,0)	=IF('Best Sheds Quoting'!P8="Owner Builder",1050,0)	95.98	134.4	=(I74+J74+K74+L74)*10%	=ROUNDUP(I74+J74+K74+L74+M74,0)	=IF(P42>0,14,0)	=IF(OR(P42>0,'BBB Estimate'!J31=TRUE),121,0)				=T73+100	=U73+100							Stonnington City Council	
+FALSE	=IF((A75=TRUE),4,0)						75000	=IF('Best Sheds Quoting'!P8="Using Builder",1000,0)	=IF('Best Sheds Quoting'!P8="Owner Builder",1100,0)	127.98	134.4	=(I75+J75+K75+L75)*10%	=ROUNDUP(I75+J75+K75+L75+M75,0)		3000	1000			=T74+100	=U74+100							Strathbogie Shire Council	
+=IF(Permits!G19>0,2,0)							100000	=IF('Best Sheds Quoting'!P8="Using Builder",1100,0)	=IF('Best Sheds Quoting'!P8="Owner Builder",1200,0)	159.98	134.4	=(I76+J76+K76+L76)*10%	=ROUNDUP(I76+J76+K76+L76+M76,0)		=P75+100	=Q75+100			=T75+100	=U75+100							Surf Coast Shire Council	
+FALSE	=IF(A77=TRUE,850,0)						125000	=IF('Best Sheds Quoting'!P8="Using Builder",1200,0)	=IF('Best Sheds Quoting'!P8="Owner Builder",1300,0)	191.98	134.4	=(I77+J77+K77+L77)*10%	=ROUNDUP(I77+J77+K77+L77+M77,0)		=P76+100	=Q76+100			=T76+100	=U76+100							Swan Hill Rural City Council	
+FALSE	=IF(A78=TRUE,347,0)						150000								=P77+100	=Q77+100			=T77+100	=U77+100							Towong Shire Council	
+FALSE	=IF(A79=TRUE,2450,0)														=P78+100	=Q78+100			=T78+100	=U78+100							Wangaratta Rural City Council	
+FALSE	=IF(A80=TRUE,950,0)														=P79+100	=Q79+100			9000	4010							Warrnambool City Council	
+															=P80+100	=Q80+100			=T80+100	=U80+100							Wellington Shire Council	
+															=P81+100	=Q81+100			=T81+100	=U81+100							West Wimmera Shire Council	
+															=P82+100	=Q82+100			=T82+100	=U82+100							Whitehorse City Council	
+															=P83+100	=Q83+100			=T83+100	=U83+100							Whittlesea City Council	
+															=P84+100	=Q84+100			=T84+100	=U84+100							Wodonga Rural City Council	
+															=P85+100	=Q85+100			=T85+100	=U85+100							Wyndham City Council	
+															=P86+100	=Q86+100			=T86+100	=U86+100							Yarra City Council	
+															=P87+100	=Q87+100			=T87+100	=U87+100							Yarra Ranges Shire Council	
+															=P88+100	=Q88+100			=T88+100	=U88+100							Yarriambiack Shire Council	
+															=P89+100	=(R90+S90)	=Q89+100	=R90*50%	=T89+100	=U89+100								
+															=P90+100	=(R91+S91)	=R90+100	=R91*50%	10000	1000								
+															=P91+100	=(R92+S92)	=R91+100	=R92*50%	=T91+1000	=U91+100								
+															=P92+100	=(R93+S93)	=R92+100	=R93*50%	=T92+1000	=U92+100								
+															=P93+100	=(R94+S94)	=R93+100	=R94*50%	=T93+1000	=U93+100								
+															=P94+100	=(R95+S95)	=R94+100	=R95*50%	=T94+1000	=U94+100								
+															=P95+100	=(R96+S96)	=R95+100	=R96*50%	=T95+1000	=U95+100								
+															=P96+100	=(R97+S97)	=R96+100	=R97*50%	=T96+1000	=U96+100								
+															=P97+100	=(R98+S98)	=R97+100	=R98*50%	=T97+1000	=U97+100								
+															=P98+100	=(R99+S99)	=R98+100	=R99*50%	=T98+1000	=U98+100								
+															=P99+100	=(R100+S100)	=R99+100	=R100*50%	=T99+1000	=U99+100								
+															=P100+100	=(R101+S101)	=R100+100	=R101*50%	=T100+1000	=U100+100								
+															=P101+100	=(R102+S102)	=R101+100	=R102*50%	=T101+1000	=U101+100								
+															=P102+100	=(R103+S103)	=R102+100	=R103*50%	=T102+1000	=U102+100								
+															=P103+100	=(R104+S104)	=R103+100	=R104*50%	=T103+1000	=U103+100								
+															=P104+100	=(R105+S105)	=R104+100	=R105*50%	=T104+1000	=U104+100								
+															Advertising				=T105+1000	=U105+100								
+														=IF(P107>0,21,0)	=IF(OR('BBB Estimate'!J44=TRUE,S27=TRUE),850,0)				=T106+1000	=U106+100								
+															=IF(P109=0,"","Reg 81")				=T107+1000	=U107+100								
+													=IF(P109>0,1,0)	=IF(P109>0,21,0)	=IF(S28=TRUE,N41,0)				=T108+1000	=U108+100								
+															=IF(P111=0,"","Reg 85")				=T109+1000	=U109+100								
+													=IF(P111>0,1,0)	=IF(P111>0,21,0)	=IF(Questionnaire!K55="❌ Not Compliant",N41,0)				=T110+1000	=U110+100								
+															=IF(P113=0,"","Reg 75")				=T111+1000	=U111+100								
+													=IF(P113>0,1,0)	=IF(P113>0,21,0)	=IF(OR(X58=TRUE,Y58=TRUE),N41,0)				=T112+1000	=U112+100								
+															Demolition Report				=T113+1000	=U113+100								
+														=IF(P115>0,14,0)	=IF(OR('BBB Estimate'!J43=TRUE,Questionnaire!A89>40),347,0)				=T114+1000	=U114+100								
+															ESD Assessment				=T115+1000	=U115+100								
+														=IF(P117>0,21,0)	=IF(Questionnaire!A71="Commercial Shed",2450,IF('BBB Estimate'!J32=TRUE,2450,0))				=T116+1000	=U116+100								
+															CCTV GPS Locating				=T117+1000	=U117+100								
+														=IF(P119>0,14,0)	=IF(OR(Questionnaire!A63="Yes",Questionnaire!A65="Yes",'BBB Estimate'!J45=TRUE),950,0)				=T118+1000	=U118+100								
+															=IF(P121>0,"Manual Report & Consent","")				=T119+1000	=U119+100								
+													=IF(P121>0,1,0)		=IF('BBB Estimate'!J33=TRUE,N41,0)				=T120+1000	=U120+100								
+															Form 8 Protection Works				=T121+1000	=U121+100								
+															=IF(Questionnaire!A98="Yes",550,0)				=T122+1000	=U122+100								
+															COVERAGE CHECK				=T123+1000	=U123+100								
+															=IF(AND(Questionnaire!E113<=25%,Questionnaire!E110>=400,Questionnaire!E110<=500),"DOES NOT COMPLY TO GARDEN SPACE PERMIT CANNOT BE GRANTED",IF(AND(Questionnaire!E113<=30%,Questionnaire!E110>500,Questionnaire!E110<=650),"DOES NOT COMPLY TO GARDEN SPACE PERMIT CANNOT BE GRANTED",IF(AND(Questionnaire!E113<=35%,Questionnaire!E110>650),"DOES NOT COMPLY TO GARDEN SPACE PERMIT CANNOT BE GRANTED","")))				=T124+1000	=U124+100								
+															Regulation 77 (permeability)				=T125+1000	=U125+100								
+													=IF(P127>0,1,0)		=IF(AND(Questionnaire!E110>1,Questionnaire!E112<=20%),N41,0)				=T126+1000	=U126+100								
+															Property Information Request				=T127+1000	=U127+100								
+														FALSE	=IF(Questionnaire!A94>=2010,275,0)				=T128+1000	=U128+100								
+															Overshadow Plan				=T129+1000	=U129+100								
+															=IF(Questionnaire!A96="Yes",380,0)				=T130+1000	=U130+100								
+															=IF(P131=0,"","Reg 83")													
+													=IF(P133>0,1,0)	=IF(P133>0,21,0)	=IF(P131>0,N41,0)													
+
+
+
+#BBB Estimate sheet
+
+																				
+	=Home!F8		=Home!F9&" "&Home!F10&" "&Home!F11&" "&Home!F12		=Home!M14															
+	Site works estimate																			
+	Created	=NOW()			=Home!M5															
+	Shed Size																			
+	="Width: "&Home!M8		="Length: "&Home!M9		="Height: "&Home!M10															
+	Kit not included in below SUM																			
+	=Construction!B11																			
+	=Construction!B10																			
+	Construction Works							Eureka Kit Profit Margin												
+	=Coding!A43+Coding!Y44+Coding!A45+Coding!G38+Coding!A40							=Coding!I45*0%												
+	=IF(Construction!B13="Contractor","Erecting Estimate Included in the below SUM","")																			
+	=IF(Construction!B15="Concretor","100mm Concrete Slab Estimate Included in the below SUM","")																			
+	=IF(Construction!B15="Partial slab: Insert Details Below","100mm PARTIAL Concrete Slab Estimate Included in the below SUM","")																			
+	=IF(Construction!B15="Footings only",Coding!C48&" Footings included in the below SUM (Standard Engineering Only)",IF(Construction!B18>=0.5,Construction!B18&" Footings included in the below SUM",""))							Construction Profit Margin												
+	=IF(Coding!D26>0,"Site scrape preparation and rubbish removal services included","")							=(Coding!X41+Coding!Y44)*0%												
+	=IF(Construction!D20="No","Costs for site levelling to be assessed at site visit","")																			
+	=IF(Construction!K24>=16000,"Registered Builders contract, license and insurance included in the below SUM","")																			
+	=IF(Construction!D22="Builder to handle Stormwater Connection","Allowance for storm water connection up to 10.0m included in the below SUM","")																			
+	=IF(AND(Construction!D22="Builder to handle Stormwater Connecton",B19=""),"Allowance for stormwater connection up to 10.0m included in the below SUM","")							Permit Profit Margin												
+	=IF(Coding!H28>=1,"Property has Restricted Access. Additional costs will be assessed at site visit","")							=I23*0%												
+	=IF(Coding!C24=TRUE,"Plant hire has been included in the below SUM","")																			
+	=IF(Coding!B48>=1,"Footing Isolators included in the below SUM","")							=Coding!P42+Coding!P44+Coding!P46+Coding!P48+Coding!P50+Coding!P52+Coding!P54+Coding!P56+Coding!P58+Coding!P60+Coding!P62+Coding!P64+Coding!P66+Coding!P68+Coding!P70+Coding!P72+Coding!P74+Coding!P107+Coding!P109+Coding!P111+Coding!P113+Coding!P115+Coding!P117+Coding!P119												
+	=IF(Construction!B26="Further than 30kms away","Travel Costs for trades and equipment not included. Additional costs apply.","")																			
+	=IF(Construction!F29>0,"Allowance for additional items included","")																			
+																				
+										OFFICE USE ONLY						=IF(AND(ETCOW!B39>1000,Construction!B13="Contractor"),Coding!A45+Coding!G38+Coding!Y44+Coding!A40+I16,IF(Coding!A43>0,Coding!A43,0))				
+																				
+										Building Permit	=IF(Questionnaire!A24="Yes",Coding!W29+5,0)					INPUT REQUIRED FOR MANUAL PLANNING INPUT:				
+										Planning Permit	=IF(Coding!P42>0,Coding!P42,0)					FALSE	Under 100k	FALSE	Over 100k	
+									FALSE	Planning Enquiry	=IF(Coding!P74>0,Coding!P74,0)		ALL TRIGGERED REGS							
+									FALSE	ESD Assessment	=Coding!P117		 DISPLAYED BELOW:			INPUT REQUIRED FOR MANUAL PLANNING INPUT:				
+									FALSE	Report & Consent	=IF(Coding!S26>=1,Coding!P50+Coding!P52+Coding!P54+Coding!P46+Coding!P109+Coding!P111+Coding!P113+Coding!P121,0)		=Coding!P45&" "&Coding!P49&" "&Coding!P51&" "&Coding!P53&" "&Coding!P108&" "&Coding!P110&" "&Coding!P112&" "&Coding!P120			FALSE	Domestic	FALSE	Farming	
+	TOTAL CONSTRUCTION SUM								FALSE	Bushfire Management Plan	=Coding!P62					FALSE	Commercial			
+	="$"&Home!U8&" + Kit & Permit"								FALSE	BAL Assessment	=Coding!P64									
+									FALSE	AHD Survey	=Coding!P66									
+									FALSE	LPOD	=Coding!P68									
+									FALSE	Combined Allotment	=Coding!P48									
+									FALSE	Soil Report	=Coding!P44									
+	Eureka Garages are shed kit providers, NOT Registered Building Practitioners.								FALSE	Council Build over	=IF(Coding!P56>0,Coding!P56,0)									
+	This above is provided as an estimate for and on behalf of the builder.								FALSE	Sewer Build over	=IF(Coding!P58>0,Coding!P58,0)									
+	 It is estimated off the information available at the point of sale.								FALSE	Custom engineering	=Coding!P72									
+	 Prices may be subject to change In certain unforseen circumstances such as unlevelled 								FALSE	Demolition Report	=Coding!P115									
+	 site, limited access, travel costs, soil classification, terrain category, engineering								FALSE	Advertising	=Coding!P107									
+	and proximity to boundaries & other buildings. 								FALSE	CCTV GPS Pipe Locating	=Coding!P119									
+										INPUT CUSTOM TEXT	INPUT FEE									
+										INPUT CUSTOM TEXT	INPUT FEE									
+																				
+																				
+										EXTRAS TOTAL	=SUM(L30:L47)									
+										BUILDING PERMIT TOTAL	=L29+I21									
+										PERMIT TOTAL	=L50+L51									
+																				
+																				
+											=IF(B14="100mm PARTIAL Conctrete Slab Estimate Included in the below SUM",3,0)									
+											=IF(C15="Footings included in the below SUM (Standard Engineering Only)",0,0)									
+																				
+																				
+											=IF(B18="Registered Builders contract, license and insurance included in the below SUM",6,0)									
+											=IF(B19="Allowance for stormwater connection up to 10.0m included in the below SUM",5,0)									
+											=IF(B20="Allowance for storm water connection up to 10.0m included in the below SUM",5,0)									
+											=IF(B21="Property has Restricted Access. Additional costs will be assessed at site visit",2,0)									
+											=IF(B22="Plant hire has been included in the below SUM",30,0)									
+																				
+											=NOW()									
+											=L133+L132									
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+																				
+
+
+
+#BPA Invoice
+
+
+														
+														
+				TAX INVOICE										
+														
+														
+														
+														
+ABN: 73 643 891 801							DATE: 	=TODAY()						
+						INVOICE #:		2025900						
+														
+			To			=Home!F8							=ETCOW!B39*0.15%	
+						=Home!F9&" "&Home!F10								
+						=Home!F11&" "&"VIC"&" "&Home!F12								
+														
+														
+														
+														
+														
+Qty	Description		Unit Price		GST Price		Line Total							
+1	Deposit		=IF(OR(H20>0,H20<0),H20-F20,"")		=IF(OR(H20>0,H20<0),H20/11,"")		=ROUNDUP(420+N11,0.1)							
+			=IF(OR(H21>0,H21<0),H21-F21,"")		=IF(OR(H21>0,H21<0),H21/11,"")									
+			=IF(OR(H22>0,H22<0),H22-F22,"")		=IF(OR(H22>0,H22<0),H22/11,"")									
+			=IF(OR(H23>0,H23<0),H23-F23,"")		=IF(OR(H23>0,H23<0),H23/11,"")									
+			=IF(OR(H24>0,H24<0),H24-F24,"")		=IF(OR(H24>0,H24<0),H24/11,"")									
+			=IF(OR(H25>0,H25<0),H25-F25,"")		=IF(OR(H25>0,H25<0),H25/11,"")									
+			=IF(OR(H26>0,H26<0),H26-F26,"")		=IF(OR(H26>0,H26<0),H26/11,"")									
+	Subtotal		=SUM(D20:E26)		=IF(OR(H27>0,H27<0),H27/11,"")									
+			GST Total		=SUM(F20:G27)									
+					Total		=SUM(H20:I28)							
+														
+														
+														
+														
+														
+														
+Bank details														
+Account Name: Bendigo Solar Passive Trading as VIC Permit Applications														
+BSB: 013 533														
+Account Number: 159 497 311														
+="Please use the following Reference Number: "&I9														
+Thank you for your business!														
+														
+VIC Permit Applications Phone: 0483 179 306 Email: permits@vicpa.com.au														
+
+
+
+#Receipt
+
+
+														
+														
+				RECEIPT										
+														
+														
+								=IF(I7="","vvv(JobNo.+Receipt No.) example: BPA023401vvv","")						
+							Receipt No.							
+ABN: 73 643 891 801							DATE: 	=TODAY()						
+						INVOICE #:		='BPA Invoice'!$I$9						
+														
+			To			=Home!F8							=ETCOW!B39*0.15%	
+						=Home!F9&" "&Home!F10								
+						=Home!F11&" "&"VIC"&" "&Home!F12								
+														
+														
+														
+														
+														
+Qty	Description		Unit Price		GST Price		Line Total							
+='BPA Invoice'!$A$20	='BPA Invoice'!$B$20		='BPA Invoice'!$D$20		='BPA Invoice'!$F$20		='BPA Invoice'!$H$20							
+=IF('BPA Invoice'!$A$21="","",'BPA Invoice'!$A$21)	=IF('BPA Invoice'!$B$21="","",'BPA Invoice'!$B$21)		=IF('BPA Invoice'!$D$21="","",'BPA Invoice'!$D$21)		=IF('BPA Invoice'!$F$21="","",'BPA Invoice'!$F$21)		=IF('BPA Invoice'!$H$21="","",'BPA Invoice'!$H$21)							
+=IF('BPA Invoice'!$A$22="","",'BPA Invoice'!$A$22)	=IF('BPA Invoice'!$B$22="","",'BPA Invoice'!$B$22)		=IF('BPA Invoice'!$D$22="","",'BPA Invoice'!$D$22)		=IF('BPA Invoice'!$F$22="","",'BPA Invoice'!$F$22)		=IF('BPA Invoice'!$H$22="","",'BPA Invoice'!$H$22)							
+=IF('BPA Invoice'!$A$23="","",'BPA Invoice'!$A$23)	=IF('BPA Invoice'!$B$23="","",'BPA Invoice'!$B$23)		=IF('BPA Invoice'!$D$23="","",'BPA Invoice'!$D$23)		=IF('BPA Invoice'!$F$23="","",'BPA Invoice'!$F$23)		=IF('BPA Invoice'!$H$23="","",'BPA Invoice'!$H$23)							
+=IF('BPA Invoice'!$A$24="","",'BPA Invoice'!$A$24)	=IF('BPA Invoice'!$B$24="","",'BPA Invoice'!$B$24)		=IF('BPA Invoice'!$D$24="","",'BPA Invoice'!$D$24)		=IF('BPA Invoice'!$F$24="","",'BPA Invoice'!$F$24)		=IF('BPA Invoice'!$H$24="","",'BPA Invoice'!$H$24)							
+=IF('BPA Invoice'!$A$25="","",'BPA Invoice'!$A$25)	=IF('BPA Invoice'!$B$25="","",'BPA Invoice'!$B$25)		=IF('BPA Invoice'!$D$25="","",'BPA Invoice'!$D$25)		=IF('BPA Invoice'!$F$25="","",'BPA Invoice'!$F$25)		=IF('BPA Invoice'!$H$25="","",'BPA Invoice'!$H$25)							
+=IF('BPA Invoice'!$A$26="","",'BPA Invoice'!$A$26)	=IF('BPA Invoice'!$B$26="","",'BPA Invoice'!$BA$26)		=IF('BPA Invoice'!$D$26="","",'BPA Invoice'!$D$26)		=IF('BPA Invoice'!$F$26="","",'BPA Invoice'!$F$26)		=IF('BPA Invoice'!$H$26="","",'BPA Invoice'!$H$26)							
+	Subtotal		=SUM(D20:E26)		=IF(OR(H27>0,H27<0),H27/11,"")									
+			GST Total		=SUM(F20:G27)									
+					Total		=SUM(H20:I28)							
+														
+														
+														
+														
+														
+														
+														
+														
+														
+														
+														
+Thank you for your business!														
+														
+VIC Permit Applications Phone: 0483 179 306 Email: permits@vicpa.com.au														
+
+
+
+#ABC & BPA Form
+
+																	
+											*Note - this should now be auto-filled if construction was filled in correctly.						
+											=IF(N4="Select a Builder",Construction!B31,N4)						
+											Manually Select a Builder:		Select a Builder				
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+	Construction of my		OUTBUILDING														
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+	Allotment Details																
+	Lot/s:				LP/PS:												
+	Number:	=Home!F9		Street:		=Home!F10											
+	City/Suburb/Town:		=Home!F11				Postcode:	=Home!F12									
+	Municipal District:		=Questionnaire!D5														
+																	
+	Owner Details: 																
+	Owner 1 Full Name:		=Home!F8														
+	Owner 2 Full Name:																
+	Postal Address:		=Home!F9&" "&Home!F10														
+	City/Suburb/Town:		=Home!F11				Postcode:	=Home!F12									
+	Email:	=Home!F15				Phone:	=Home!F14										
+																	
+	Signature																
+																	
+	Owner 1			Owner 2													
+	Signature:			Signature:													
+																	
+	Name:	=D27		Name:		=D28											
+	Date:			Date:													
+																	
+	Builders details:																
+	Builder:	=IF(L3="Owner Builder",D27,IF(L3="Building By Bryan Pty. Ltd.","Building By Bryan Pty. Ltd.",IF(L3="Peter Carr Constructions Pty. Ltd.","Peter Carr Constructions Pty. Ltd.",IF(L3="CDLS Industries Pty. Ltd.","CDLS Industries Pty. Ltd.",IF(L3="Neville Lowry","Neville Lowry",IF(L3="Accomplish Concrete & Construction","Indigab Pty. Ltd.",IF(L3="Kyle Chant","Kyle Chant","")))))))															
+	Postal Address:		=IF(L3="Owner Builder",D29,IF(L3="Building By Bryan Pty. Ltd.","66 Morrison Street",IF(L3="Peter Carr Constructions Pty. Ltd.","4 Nolan Street",IF(L3="CDLS Industries Pty. Ltd.","47B Eaglehawk Road",IF(L3="Neville Lowry","21 Burnette Street",IF(L3="Accomplish Concrete & Construction","60 Pentlands Road",IF(L3="Kyle Chant","30 Adam Street","")))))))														
+	City/Suburb/Town:		=IF(L3="Owner Builder",D30,IF(L3="Building By Bryan Pty. Ltd.","Kangaroo Flat",IF(L3="Peter Carr Constructions Pty. Ltd.","Bendigo",IF(L3="CDLS Industries Pty. Ltd.","Bendigo",IF(L3="Neville Lowry","Koondrook",IF(L3="Accomplish Concrete & Construction","Mandourang",IF(L3="Kyle Chant","Golden Square","")))))))				Postcode:	=IF(L3="Owner Builder",I30,IF(L3="Building By Bryan Pty. Ltd.","3555",IF(L3="Peter Carr Constructions Pty. Ltd.","3550",IF(L3="CDLS Industries Pty. Ltd.","3550",IF(L3="Neville Lowry","3580",IF(L3="Accomplish Concrete & Construction","3551",IF(L3="Kyle Chant","3555","")))))))									
+	Email:	=IF(L3="Owner Builder",C31,IF(L3="Building By Bryan Pty. Ltd.","bsmi5622@gmail.com",IF(L3="Peter Carr Constructions Pty. Ltd.","office@petercarr.com.au",IF(L3="CDLS Industries Pty. Ltd.","leigh@cdls.com.au",IF(L3="Neville Lowry","gnuts1967@gmail.com",IF(L3="Accomplish Concrete & Construction","lennybuilding@gmail.com",IF(L3="Kyle Chant","admin@accomplishcc.com","")))))))				Phone:	=IF(L3="Owner Builder",H31,IF(L3="Building By Bryan Pty. Ltd.","0429 815 177",IF(L3="Peter Carr Constructions Pty. Ltd.","5443 3999",IF(L3="CDLS Industries Pty. Ltd.","5440 2507",IF(L3="Neville Lowry","0427 121 946",IF(L3="Accomplish Concrete & Construction","0417 116 517",IF(L3="Kyle Chant","0400 721 583","")))))))										
+	DBU:	=IF(L3="Neville Lowry","DBL16764",IF(L3="Building By Bryan Pty. Ltd.","DB-U 67452",IF(L3="Accomplish Concrete & Construction","CDB-U 53226",IF(L3="Kyle Chant","DB-L 100358",""))))															
+																	
+																	
+	Updated June 2023																
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+	Appointment of the Relevant Building Surveyor																
+		Must be completed by owner															
+																	
+	I/We,	=Home!F8															
+		Print all owner/s name/s															
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+	Allotment Details																
+	Lot/s:				LP/PS:												
+	Number:	=Home!F9		Street:		=Home!F10											
+	City/Suburb/Town:		=Home!F11				Postcode:	=Home!F12									
+	Municipal District:		=D24														
+																	
+	Owner Details: 																
+	Owner 1 Full Name:		=Home!F8														
+	Owner 2 Full Name:		=G38														
+	Postal Address:		=Home!F9&" "&Home!F10														
+	City/Suburb/Town:		=Home!F11				Postcode:	=Home!F12									
+	Email:	=Home!F15				Phone:	=Home!F14										
+																	
+	Signature																
+																	
+	Owner 1			Owner 2													
+	Signature:			Signature:													
+																	
+	Name:	=D79		Name:		=G38											
+	Date:			Date:													
+																	
+	Builders details:																
+	Builder:	=C42															
+	Postal Address:		=D43														
+	City/Suburb/Town:		=D44				Postcode:	=I44									
+	Email:	=C45				Phone:	=H45										
+	DBU:	=C46															
+PO Box 451 Strathfieldsaye 3551 • Email: inspections@axedalebc.com • Phone: 0422 255 409																	
+ABN 80 194 542 118																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+	Appointment of the Relevant Building Surveyor																
+		Must be completed by owner															
+																	
+	I/We,	=C62															
+		Print all owner/s name/s															
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+	Allotment Details																
+	Lot/s:				LP/PS:												
+	Number:	=C74		Street:		=G74											
+	City/Suburb/Town:		=D75				Postcode:	=I75									
+	Municipal District:		=D76														
+																	
+	Owner Details: 																
+	Owner 1 Full Name:		=D79														
+	Owner 2 Full Name:		=G38														
+	Postal Address:		=D81														
+	City/Suburb/Town:		=D82				Postcode:	=I82									
+	Email:	=C83				Phone:	=H83										
+																	
+	Signature																
+																	
+	Owner 1			Owner 2													
+	Signature:			Signature:													
+																	
+	Name:	=D129		Name:		=G38											
+	Date:			Date:													
+																	
+	Builders details:																
+	Builder:	=C42															
+	Postal Address:		=D43														
+	City/Suburb/Town:		=D44				Postcode:	=I44									
+	Email:	=C45				Phone:	=H45										
+	DBU:	=C46															
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+	TERMS AND CONDITIONS																
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+	Signature																
+																	
+	Owner 1			Owner 2													
+	Signature:			Signature:													
+																	
+	Name:	=D27		Name:		=G38											
+	Date:			Date:													
+	Updated June 2023																
+																	
+																	
+	="Axedale Building Consulting &/OR "&Questionnaire!D5																
+	P.O. Box 431																
+	Caloundra QLD 4551																
+							Date:	=NOW()									
+																	
+											=IF(AND(Questionnaire!F99="",Questionnaire!B101>""),Questionnaire!B100&" & ",IF(Questionnaire!B101>"",Questionnaire!B100&", ",IF(Questionnaire!B100="","",Questionnaire!B100&".")))	=IF(L208>"",TRUE,FALSE)					
+	="Attn: Michael Harvey Relevant Building Surveyor &/OR "&Questionnaire!D5										=IF(AND(Questionnaire!F100="",Questionnaire!B102>""),Questionnaire!B101&" & ",IF(Questionnaire!B102>"",Questionnaire!B101&", ",IF(Questionnaire!B101="","",Questionnaire!B101&".")))						
+											=IF(AND(Questionnaire!F101="",Questionnaire!F100>""),Questionnaire!B102&" & ",IF(Questionnaire!F100>"",Questionnaire!B102&", ",IF(Questionnaire!B102="","",Questionnaire!B102&".")))						
+	="Statement of Use for proposed shed at " &'BBB Estimate'!D2										=IF(AND(Questionnaire!F102="",Questionnaire!F101>""),Questionnaire!F100&" & ",IF(Questionnaire!F101>"",Questionnaire!F100&", ",IF(Questionnaire!F100="","",Questionnaire!F100&".")))						
+											=IF(Questionnaire!F102>"",Questionnaire!F101&" & ",IF(Questionnaire!F102>"",Questionnaire!F101&", ",IF(Questionnaire!F101="","",Questionnaire!F101&".")))						
+	=IF(Questionnaire!A71="Farm Shed.","The proposed shed is to be used for Agricultural storage purposes only, specifically safe storage of:","The proposed shed is to be used for general personal storage purposes only, specifically safe storage of:")										=IF(Questionnaire!F102="","",Questionnaire!F102&".")						
+																	
+	=L208&L209&L210&L211&L212&L213																
+																	
+	It will not be used for commercial, habitable, or industrial use at any time.																
+																	
+	There will be no business or warehousing operations being conducted from the shed at any time and no																
+	goods or produce related to business activities will be stored or displayed in the shed.																
+																	
+	Kind Regards,																
+	=Home!F8&" "&D28																
+	Signed																
+	Owner/Applicant																
+
+
+
+
+
+#ETCOW
+
+										
+										
+										
+										
+										
+	=Home!F8			=Home!F9&" "&Home!F10&" "&Home!F11&" "&Home!F12				=Home!M14		
+										
+	Created	=NOW()					=Home!M5			
+	Shed Size									
+	Width:	=Coding!J56		Length:	=Coding!J57		Height:	=Coding!J58		
+										
+	=Construction!B11									
+	=IF(Construction!B13="Contractor","Erecting Estimate Included in the below SUM","")									=IF(B16="",FALSE,TRUE)
+	=IF(Construction!B15="Concretor","100mm Conctrete Slab Estimate Included in the below SUM","")									=IF(B17="",FALSE,TRUE)
+	=IF(Construction!B15="Partial slab: Insert Details Below","100mm PARTIAL Conctrete Slab Estimate Included in the below SUM","")									=IF(B18="",FALSE,TRUE)
+	=IF(Construction!B15="Footings only",Coding!C48,IF(Construction!B18>=0.5,Construction!B18,""))	=IF(OR(Construction!B18>=0.5,Construction!B15="Footings only"),"Footings included in the below SUM (Standard Engineering Only)","")								=IF(B19="",FALSE,TRUE)
+	=IF(B13>0,"Site scrape preparation and rubbish removal services included","")									=IF(B20="",FALSE,TRUE)
+	=IF(Construction!D20="No","Costs for site levelling to be assessed at site visit","")									=IF(B21="",FALSE,TRUE)
+	=IF(Construction!K24>=16000,"Registered Builders contract, license and insurance included in the below SUM","")									=IF(B22="",FALSE,TRUE)
+	=IF(Construction!D22="Builder to handle Stormwater Connection","Allowance for storm water connection up to 10.0m included in the below SUM","")									=IF(B23="",FALSE,TRUE)
+	=IF(AND(Construction!D22="Builder to handle Stormwater Connecton",B23=""),"Allowance for stormwater connection up to 10.0m included in the below SUM","")									=IF(B24="",FALSE,TRUE)
+	=IF(Coding!H28>=1,"Property has Restricted Access. Additional costs will be assessed at site visit","")									=IF(B25="",FALSE,TRUE)
+	=IF(Coding!C24=TRUE,"Plant hire has been included in the below SUM","")									=IF(B26="",FALSE,TRUE)
+	=IF(Coding!B48>=1,"Footing Isolators included in the below SUM","")									=IF(B27="",FALSE,TRUE)
+	=IF(Construction!B26="Further than 30kms away","Travel Costs for trades and equipment not included. Additional costs apply.","")									
+	=IF(Construction!F29>0,"Allowance for additional items included","")									
+										
+										
+										
+										
+										
+										
+										
+										
+	Estimated total cost of works									
+	=B15									
+										
+										
+										
+										
+										
+										
+										
+	This above is provided as an estimate of local independent trades.									
+	 It is estimated off the information available at the point of sale.									
+	 Prices may be subject to change In certain unforseen circumstances such as unlevelled 									
+	 site, limited access, travel costs, soil classification, terrain category, engineering									
+	and proximity to boundaries & other buildings. 									
+
+
+
+#Permits
+
+
+								
+								
+								
+								
+								
+								
+								
+								
+								
+								
+								
+								
+								
+								
+	Victoria							
+	=Home!F8		=Home!F9&" "&Home!F10&" "&Home!F11&" "&Home!F12				=Home!M14	
+	Fee Proposal Estimate							
+	Created	=NOW()				=Home!M5		
+	Building Permit					=IF(D17="Up to 16k",1650,IF(D17="Between 16k & 20k",1725,IF(D17="Between 20k & 30k",1800,IF(D17="Between 30k & 40k",1900,IF(D17="Between 40k & 50k",1950,IF(D17="Between 50k & 75k",2000,IF(D17="Between 75k & 100k",2050,IF(D17="Between 100k & 125k",2100,IF(D17="Between 125k & 150k",2150,IF(AND(Y29>=125001,Y29<=150000),2150,0))))))))))		
+	Planning Permit					=Coding!D55+Coding!D56+Coding!D57+Coding!D58+Coding!D59		
+	Planning Enquiry					=IF(G18>0,121,0)		
+	ESD Assessment					=Coding!B79		
+	Report And Consent					=Coding!E61		
+	Report And Consent					=Coding!E62		
+	Bushfire Management Plan					=IF(Coding!A68=TRUE, "$700.00", "$0.00")		
+	BAL Assessment					=IF(Coding!A69=TRUE, "$325.00", "$0.00")		
+	AHD - Flooding Land Survey					=IF(Coding!A74=TRUE, "$1,200.00", "$0.00")		
+	LPOD					=IF(Coding!A70=TRUE, "$202.00", "$0.00")		
+	Combined Allotment					=IF(Coding!A71=TRUE, "$214.50", "$0.00")		
+	Soil Report					=IF(Coding!A72=TRUE, "$1,050.00", "$0.00")		
+	Build Over Consent					=IF(Coding!A73=TRUE, "$423.00", "$0.00")		
+	Engineering for Slab (Subject to Soil Report)					=IF(Coding!A75=TRUE,1287,0)		
+	Advertising					=Coding!B77		
+	Demolition Report					=Coding!B78		
+	CCTV GPS Locating					=Coding!B80		
+	=IF(B13="New South Whales","Levy - 1.5% of Total Cost","")					=IF(AND(B13="New South whales",Construction!B34>=20000),Construction!B34*(1.5%),"")		
+	=IF(B13="New South Whales","Certification of Engineering","")					=IF(B13="New South whales",660,"")		
+	=IF(G18>=1,"This final product cannot be guaranteed before Christmas 2022","")							
+	Total Permit Costing					=SUM(G17+G18+G21+G22+G23+G24+G26+G27+G28+G29+G25+G30+G19)		
+	Estimated Completion  Time					=Coding!E51+Coding!E56+Coding!E57+Coding!E58+Coding!E59+Coding!F61+Coding!F62+Coding!B68+Coding!B69+Coding!B70+Coding!B71+Coding!B72+Coding!B73+Coding!B74+Coding!B75+Coding!A76	Weeks	
+								
+								
+								
+								
+								
+								
+								
+								
+								
+	Disclaimer;							
+	The above pricing is estimated off the information available to 							
+	Bendigo Permit Applications at the point of sale. Prices may be subject to change							
+	In certain unforseen circumstances. At no point will Bendigo Permit Applications 							
+	include additional fees without consent from the Land Owner.							
+
+
+#QPermits
+
+																		
+										
+										
+										
+										
+										
+										
+										
+										
+	=Home!F8		=Home!F9&" "&Home!F10&" "&Home!F11&" "&Home!F12				=Home!M14			
+	Fee Proposal Estimate									
+	Created	=NOW()				=Home!M5				
+	Building Permit					=Coding!P60				
+	Planning Permit					=Coding!P42				
+	Planning Enquiry					=Coding!P74				
+	Report And Consent					=IF(Coding!S26>=1,Coding!P46+Coding!P50+Coding!P52+Coding!P54,0)				
+	Bushfire Management Plan					=Coding!P62		                		
+	BAL Assessment					=Coding!P64				
+	AHD - Flooding Land Survey					=Coding!P66				
+	LPOD					=Coding!P68				
+	Combined Allotment					=Coding!P48				
+	Soil Report					=Coding!P44				
+	Build Over Consent - Council					=Coding!P56				
+	Build Over Consent - Water Authority					=Coding!P58				
+	Engineering for Slab or custom footing designs					=Coding!P72				
+	=IF(G13>=1,"This final product cannot be guaranteed before Christmas 2022","")									
+	Total Permit Costing					=SUM(G12:H24)				
+	Estimated Completion Date (Permit only)					=L17+L18				
+										
+										
+										
+										
+										
+										
+										
+										
+										
+	Recommended Boundary offsets as per Building Codes Australia:									
+	Width Offset:		=Questionnaire!J34							
+	Length Offset:		=Questionnaire!J32							
+	Assigned Boundary offsets for the above proposal:									
+	Width Offset:		=Questionnaire!A34							
+	Length Offset: 		=Questionnaire!A32							
+										
+	Disclaimer;									
+	The above pricing is estimated off the information available to 									
+	Bendigo Permit Applications at the point of sale. Prices may be subject to change									
+	In certain unforseen circumstances. At no point will Bendigo Permit Applications 									
+	include additional fees without consent from the Land Owner.									

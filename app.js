@@ -1733,17 +1733,6 @@ if (require.main === module && process.env.NODE_ENV !== 'test') {
         } catch (cleanupError) {
             console.error('⚠️  Error during startup cleanup:', cleanupError.message);
         }
-        
-        // Schedule periodic cleanup every 6 hours
-        setInterval(async () => {
-            try {
-                console.log('🧹 Running scheduled file cleanup...');
-                const cleanupStats = await cleanupOrphanedFiles(48);
-                console.log(`✅ Scheduled cleanup completed: ${cleanupStats.filesDeleted} files removed`);
-            } catch (cleanupError) {
-                console.error('⚠️  Error during scheduled cleanup:', cleanupError.message);
-            }
-        }, 6 * 60 * 60 * 1000); // 6 hours in milliseconds
     });
     
     // Graceful shutdown
