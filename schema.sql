@@ -1,4 +1,4 @@
-CREATE DATABASE contact
+CREATE DATABASE bella
 WITH
 OWNER = postgres
 ENCODING = 'UTF8'
