@@ -1,6 +1,18 @@
-# Contact Page Application
+# BELLA - Building Estimation Lead Licensing Applications
 
-A full-featured c```env
+A full-featured Building Permit Estimation Lead Generation Platform for Victorian Permit Applications.
+
+**BELLA** is a specialized B2C service application that functions as a customer filtering and process automation system for building permit estimations.
+
+## About BELLA
+
+BELLA (Building Estimation Lead Licensing Applications) streamlines the building permit estimation process by:
+- Capturing and qualifying leads through comprehensive forms
+- Processing payments to ensure serious customer commitment  
+- Automating information distribution to permit specialists
+- Saving approximately 30 minutes per customer in administrative tasks
+
+```env
 # Database Configuration
 PG_USER=your_postgres_username
 PG_HOST=localhost
